@@ -177,45 +177,71 @@ async function next(){const m=missing();document.querySelectorAll('.q.bad').forE
  await submit()}
 async function submit(){nav.className='hide';show('<p class="sub">Отправляем ответы…</p>');const A=JSON.parse(JSON.stringify(st.A)),S=score(A);
  let uid=localStorage.getItem('cc_uuid_'+K());if(!uid){uid=crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random();localStorage.setItem('cc_uuid_'+K(),uid)}
- const payload={action:'submit',record_uuid:uid,participant_id:st.id,visit:st.visit,datetime:new Date().toISOString(),scores:S,answers:A};
- try{const r=await api(payload,4);try{localStorage.removeItem(K())}catch(e){}done(S,r)}
+ const submittedAt=new Date();
+ const payload={action:'submit',record_uuid:uid,participant_id:st.id,visit:st.visit,datetime:submittedAt.toISOString(),scores:S,answers:A};
+ try{const r=await api(payload,4);try{localStorage.removeItem(K())}catch(e){}done(S,r,submittedAt)}
  catch(e){show(`<h1>Не удалось отправить</h1><p class="sub">${esc(msg(e))} Ответы сохранены на этом устройстве.</p><button class="pri" id="r" style="width:100%">Повторить отправку</button>`);$('#r').onclick=submit}}
 function dateText(d){return new Intl.DateTimeFormat('ru-RU',{day:'2-digit',month:'long',year:'numeric'}).format(d)}
-function makeSummary(A,S,r){
- const now=new Date(), due=new Date(now);due.setDate(due.getDate()+14);
+function makeSummary(A,S,submittedAt){
+ const due=new Date(submittedAt);due.setDate(due.getDate()+14);
  const fmt=v=>v===undefined||v===null||v===''?'не указано':String(v);
- const pain=A.gp==='Y'?'Да':A.gp==='N'?'Нет':'Не указано';
  const lines=[];
- lines.push('Краткая сводка ответов SmartAIR TMD');
+ lines.push('Результаты заполнения SmartAIR TMD');
  lines.push('Код участника: '+st.id);
- lines.push('Дата заполнения (T'+(st.visit-1)+'): '+dateText(now));
- lines.push('Боль за последние 30 дней: '+pain+'.');
+ lines.push('Дата заполнения (T'+(st.visit-1)+'): '+dateText(submittedAt));
+ lines.push('');
+ lines.push('Показатели по вашим ответам:');
+ lines.push('Боль сейчас: '+(A.gp==='Y'?fmt(A.g1)+'/10':'не отмечалась за последние 30 дней')+'.');
  if(A.gp==='Y'){
-  lines.push('Боль сейчас: '+fmt(A.g1)+'/10; максимальная за 30 дней: '+fmt(A.g2)+'/10; средняя: '+fmt(A.g3)+'/10.');
-  lines.push('Влияние боли на повседневную активность: '+fmt(A.g4)+'/10; отдых и общение: '+fmt(A.g5)+'/10; работу/учёбу: '+fmt(A.g6)+'/10.');
-  lines.push('Дней с ограничением обычной активности: '+fmt(A.g7)+' из 30.');
+  lines.push('Наибольшая боль за последние 30 дней: '+fmt(A.g2)+'/10.');
+  lines.push('Средняя боль за последние 30 дней: '+fmt(A.g3)+'/10.');
+  lines.push('Влияние боли на повседневные дела: '+fmt(A.g4)+'/10.');
+  lines.push('Влияние боли на отдых и общение: '+fmt(A.g5)+'/10.');
+  lines.push('Влияние боли на работу или учёбу: '+fmt(A.g6)+'/10.');
+  lines.push('Дней с ограничением обычных занятий: '+fmt(A.g7)+' из 30.');
  }
- lines.push('Функция челюсти (JFLS-8, среднее): '+S.jfls8+'/10.');
- lines.push('Тревожные симптомы (GAD-7): '+S.gad7+'/21.');
- lines.push('Симптомы депрессии (PHQ-9): '+S.phq9+'/27.');
- lines.push('Качество сна (PSQI): '+S.psqi+'/21.');
- const meds=(A.mednone?'Не принимает лекарства (по ответу).':(A.meds||[]).filter(m=>m.n&&m.n.trim()).map(m=>m.n+(m.d?' — '+m.d:'')).join('; '));
- lines.push('Лекарства: '+(meds||'не указаны')+'.');
+ lines.push('Функция челюсти — JFLS-8 (среднее значение): '+S.jfls8+'/10.');
+ lines.push('Ответы на вопросы GAD-7: '+S.gad7+'/21.');
+ lines.push('Ответы на вопросы PHQ-9: '+S.phq9+'/27.');
+ lines.push('Ответы на вопросы PSQI: '+S.psqi+'/21.');
+ lines.push('Ответы о привычках челюсти — OBC: '+S.obc+'/84.');
+ lines.push('');
  if(st.visit<3)lines.push('Ориентировочная дата следующего заполнения (через 14 дней): '+dateText(due)+'.');
- lines.push('Это краткий пересказ ответов анкеты, а не диагноз и не медицинское заключение.');
+ else lines.push('Все запланированные этапы заполнения завершены.');
+ lines.push('');
+ lines.push('Карточка содержит числовые показатели и ответы из анкеты. Она не является диагнозом, медицинским заключением или рекомендацией по лечению.');
  return {text:lines.join('\\n'),due:st.visit<3?dateText(due):null};
 }
-function done(S,r){$('#bar i').style.width='100%';const last=st.visit>=3;
- const summary=makeSummary(st.A,S,r);
- show(`<h1>Анкета ${st.visit} из 3 отправлена</h1>`+(S.alert?`<div class="warn"><b>Если у вас есть мысли о причинении себе вреда</b>, пожалуйста, сегодня же обратитесь за помощью: позвоните по номеру 112 или сообщите врачу.</div>`:'')+
- `<section class="summary" id="patientSummary"><h2>Ваши ответы — краткая сводка</h2>
- <p><b>Код участника:</b> ${esc(st.id)}</p><p><b>Дата заполнения (T${st.visit-1}):</b> ${dateText(new Date())}</p>
- <ul>${(summary.text.split('\\n').slice(3,-(last?1:2))).map(x=>'<li>'+esc(x)+'</li>').join('')}</ul>
- ${last?'<p><b>Спасибо! Все три анкеты заполнены.</b></p>':`<p><b>Следующий чек-ап (ориентировочно):</b> ${summary.due}</p>`}
- <p class="summary-note">Это структурированный пересказ ваших ответов, а не диагноз или медицинское заключение.</p>
- <div class="summary-actions"><button class="pri" id="copySummary">Скопировать текст для врача</button><button id="printSummary">Сохранить / распечатать</button></div></section>`+
- (last?'<p class="sub">Спасибо за участие!</p>':`<p class="sub">Сохраните код участника — он понадобится для следующего заполнения.</p><div class="big">${st.id}</div>${linkBtn()}`));
- const cp=$('#copySummary');if(cp)cp.onclick=async()=>{try{await navigator.clipboard.writeText(summary.text);cp.textContent='Скопировано'}catch(e){const ta=document.createElement('textarea');ta.value=summary.text;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');cp.textContent='Скопировано'}catch(x){cp.textContent='Не удалось скопировать'}ta.remove()}};
- const pr=$('#printSummary');if(pr)pr.onclick=()=>window.print();bindLink()}
+function done(S,r,submittedAt){
+ $('#bar i').style.width='100%';
+ const last=st.visit>=3;
+ const summary=makeSummary(st.A,S,submittedAt);
+ const resultLines=summary.text.split('\\n').slice(4);
+ show(`<h1>Анкета ${st.visit} из 3 отправлена</h1>`+
+ (S.alert?`<div class="warn"><b>Если у вас есть мысли о причинении себе вреда</b>, пожалуйста, сегодня же обратитесь за помощью: позвоните по номеру 112 или сообщите врачу.</div>`:'')+
+ `<section class="summary" id="patientSummary">
+ <h2>Ваши результаты SmartAIR TMD</h2>
+ <p class="summary-note">Информационная карточка по вашим ответам</p>
+ <p><b>Код участника:</b> ${esc(st.id)}</p>
+ <p><b>Дата заполнения (T${st.visit-1}):</b> ${dateText(submittedAt)}</p>
+ <div class="summary-results"><b>Показатели по заполненным шкалам и вопросам</b>
+ <ul>${resultLines.filter(x=>x&&!x.startsWith('Ориентировочная дата')&&!x.startsWith('Все запланированные')&&!x.startsWith('Карточка содержит')).map(x=>'<li>'+esc(x)+'</li>').join('')}</ul></div>
+ ${last?'<p><b>Все запланированные этапы заполнения завершены.</b></p>':`<p><b>Следующее заполнение (ориентировочно):</b> ${summary.due}</p>`}
+ <p class="summary-note">Здесь приведены только ваши ответы и рассчитанные по ним баллы. Карточка не устанавливает диагноз и не содержит рекомендаций по лечению.</p>
+ <div class="summary-actions"><button class="pri" id="copySummary">Скопировать результаты</button><button id="printSummary">Сохранить / распечатать</button></div>
+ </section>`+
+ (last?'<p class="sub">Спасибо за участие!</p>':`<p class="sub">Сохраните код участника — он понадобится для следующего заполнения.</p><div class="big">${esc(st.id)}</div>${linkBtn()}`));
+ const cp=$('#copySummary');
+ if(cp)cp.onclick=async()=>{
+  try{await navigator.clipboard.writeText(summary.text);cp.textContent='Скопировано'}
+  catch(e){
+   const ta=document.createElement('textarea');ta.value=summary.text;document.body.appendChild(ta);ta.select();
+   try{document.execCommand('copy');cp.textContent='Скопировано'}catch(x){cp.textContent='Не удалось скопировать'}
+   ta.remove();
+  }
+ };
+ const pr=$('#printSummary');if(pr)pr.onclick=()=>window.print();
+ bindLink();
+}
 (async()=>{if(qp.get('new')){localStorage.removeItem('cc_id');return home()}const id=(qp.get('id')||localStorage.getItem('cc_id')||'').toUpperCase().replace(/[^A-Z0-9]/g,'');if(id.length>=4){st.id=id;start()}else home()})();
 </script></body></html>
