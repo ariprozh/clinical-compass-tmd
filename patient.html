@@ -103,7 +103,7 @@ $('#go').onclick=async()=>{
     const r=await api({action:'register'});
 
     // Проверяем, какое поле с кодом вернул сервер
-    const newId = r.id || r.participant_id || r.code;
+    const newId = r.id || r.participant_id || r.code || r.record_uuid;
 
     if (r.status !== 'success' || !newId) {
       throw new Error(
