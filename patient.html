@@ -95,7 +95,33 @@ const setCode=()=>{const c=$('#code');if(st.id){c.textContent='Код '+st.id;c.
 const msg=e=>e&&e.message?e.message:'Нет связи. Проверьте интернет и повторите.';
 function home(){st.id=null;setCode();$('#bar i').style.width='0';show(`<h1>Анкета пациента</h1><p class="sub">Заполнение займёт около 20 минут.</p>
 <button class="pri" id="go" style="width:100%">Начать первую анкету</button><p class="err" id="e"></p><button class="link" id="have">У меня уже есть код</button>`);
- $('#go').onclick=async()=>{$('#go').disabled=true;$('#e').textContent='';try{const r=await api({action:'register'});st.id=r.id;localStorage.setItem('cc_id',r.id);start({visit:1,open:true})}catch(e){$('#e').textContent=msg(e);$('#go').disabled=false}};
+
+$('#go').onclick=async()=>{
+  $('#go').disabled=true;
+  $('#e').textContent='';
+  try{
+    const r=await api({action:'register'});
+
+    // Проверяем, какое поле с кодом вернул сервер
+    const newId = r.id || r.participant_id || r.code;
+
+    if (r.status !== 'success' || !newId) {
+      throw new Error(
+        'Сервер не вернул код участника. Ответ: ' +
+        JSON.stringify(r)
+      );
+    }
+
+    st.id = String(newId).toUpperCase();
+    localStorage.setItem('cc_id', st.id);
+    start({visit:1,open:true});
+
+  }catch(e){
+    $('#e').textContent=msg(e);
+    $('#go').disabled=false;
+  }
+};
+
  $('#have').onclick=()=>enter();}
 function enter(m){show(`<h1>Ваш код</h1><p class="sub">Он выдавался при первой анкете.</p><input type="text" id="ci" maxlength="12" autocapitalize="characters" placeholder="Например K7M4QP" style="text-transform:uppercase">
 <p class="err" id="e">${m||''}</p><button class="pri" id="ok" style="width:100%">Продолжить</button><button class="link" id="bk">Назад</button>`);
