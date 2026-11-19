@@ -25,7 +25,7 @@ nav{position:fixed;left:0;right:0;bottom:0;background:var(--c);border-top:1px so
 <header><b>Клинический Компас</b><span id="code" class="hide"></span></header><div id="bar"><i></i></div>
 <main id="app"></main><nav id="nav" class="hide"></nav>
 <script>
-const DEFAULT_ENDPOINT='https://script.google.com/macros/s/AKfycbzl-9K311bAqANDZjtB_1m81fiz9LaaXafEmasgb9iuqEBGZhf-F6u6kD_r1lwIFfkj5g/exec';
+const DEFAULT_ENDPOINT=https://script.google.com/macros/s/AKfycbwEsvDTaH4Fuy4_WB6DFnJjy_yp_eF2U1Up6dPaV1zLLsgFWZl4LZHQ00DSUISXPuDiTA/exec;
 const qp=new URLSearchParams(location.search), ep=qp.get('endpoint');
 const API=(ep&&ep.startsWith('https://script.google.com/'))?ep:DEFAULT_ENDPOINT;
 const $=s=>document.querySelector(s), app=$('#app'), nav=$('#nav');
