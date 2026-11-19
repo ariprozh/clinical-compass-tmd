@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Анкета пациента</title>
+<style>
+:root{--b:#0f4c81;--bg:#f2f7fc;--c:#fff;--t:#0f172a;--m:#64748b;--l:#d3e0ee;--ok:#0d9488;--er:#e11d48}
+@media(prefers-color-scheme:dark){:root{--bg:#0b1220;--c:#142036;--t:#e8eef6;--m:#9fb0c6;--l:#2a3d5a;--b:#5aa2e6}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--c);border-bottom:1px solid var(--l);padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+header b{color:var(--b)}#code{font:600 13px ui-monospace,monospace;background:var(--bg);border:1px solid var(--l);border-radius:8px;padding:3px 8px}
+#bar{height:4px;background:var(--l)}#bar i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}
+main{max-width:680px;margin:0 auto;padding:18px 14px 110px}
+h1{font-size:24px;margin:8px 0}h2{font-size:20px;margin:6px 0 4px}.sub{color:var(--m);margin:0 0 14px;font-size:14px}
+.q{background:var(--c);border:1px solid var(--l);border-radius:14px;padding:14px;margin:0 0 12px}.q.bad{border-color:var(--er)}.q p{margin:0 0 10px;font-weight:600}.hide{display:none}
+.sc{display:grid;grid-template-columns:repeat(11,1fr);gap:4px}.ends{display:flex;justify-content:space-between;color:var(--m);font-size:12px;margin-top:6px}
+.ch{display:grid;gap:6px}
+button{font:inherit;cursor:pointer;border:1px solid var(--l);background:var(--c);color:var(--t);border-radius:10px;padding:10px 8px;text-align:left}
+.sc button{text-align:center;padding:10px 0}button.on{background:var(--b);color:#fff;border-color:var(--b)}
+.pri{background:var(--b);color:#fff;border-color:var(--b);text-align:center;font-weight:600;padding:14px 22px}.link{border:0;background:none;color:var(--b);text-decoration:underline;padding:8px 0}
+input[type=text],input[type=number],input[type=time],select,textarea{width:100%;font:inherit;padding:10px;border:1px solid var(--l);border-radius:10px;background:var(--bg);color:var(--t)}
+textarea{min-height:80px}label.cb{display:flex;gap:8px;align-items:center;padding:6px 0}label.cb input{width:20px;height:20px}
+.med{display:grid;gap:6px;border-top:1px dashed var(--l);padding-top:10px;margin-top:10px}.med:first-of-type{border:0;margin:0;padding:0}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--c);border-top:1px solid var(--l);padding:10px 14px;display:flex;gap:10px;justify-content:center}nav button{flex:1;max-width:240px;text-align:center}
+.big{font:700 34px ui-monospace,monospace;letter-spacing:4px;text-align:center;background:var(--c);border:2px dashed var(--b);border-radius:14px;padding:16px;margin:14px 0}
+.warn{background:#fff1f2;color:#881337;border:1px solid #fda4af;border-radius:12px;padding:12px;margin:12px 0}.err{color:var(--er);min-height:22px;margin:8px 0}
+</style></head><body>
+<header><b>Клинический Компас</b><span id="code" class="hide"></span></header><div id="bar"><i></i></div>
+<main id="app"></main><nav id="nav" class="hide"></nav>
+<script>
+const DEFAULT_ENDPOINT='https://script.google.com/macros/s/AKfycbzl-9K311bAqANDZjtB_1m81fiz9LaaXafEmasgb9iuqEBGZhf-F6u6kD_r1lwIFfkj5g/exec';
+const qp=new URLSearchParams(location.search), ep=qp.get('endpoint');
+const API=(ep&&ep.startsWith('https://script.google.com/'))?ep:DEFAULT_ENDPOINT;
+const $=s=>document.querySelector(s), app=$('#app'), nav=$('#nav');
+const sc=(k,t,lo,hi)=>({k,t,y:'sc',lo,hi}), ch=(k,t,o,x)=>({k,t,y:'ch',o,...x}), nm=(k,t,x)=>({k,t,y:'n',...x}), tx=(k,t,x)=>({k,t,y:'t',...x}), tm=(k,t)=>({k,t,y:'tm'}), mu=(k,t,o,x)=>({k,t,y:'mu',o,...x});
+const F4=[[0,'Совсем нет'],[1,'Несколько дней'],[2,'Более половины дней'],[3,'Почти каждый день']];
+const PF=[[0,'Ни разу за месяц'],[1,'Реже 1 раза в неделю'],[2,'1–2 раза в неделю'],[3,'3 и более раз в неделю']];
+const OS=[[0,'Никогда'],[1,'Реже 1 ночи в месяц'],[2,'1–3 ночи в месяц'],[3,'1–3 ночи в неделю'],[4,'4–7 ночей в неделю']];
+const OW=[[0,'Никогда'],[1,'Малую часть времени'],[2,'Иногда'],[3,'Большую часть времени'],[4,'Всё время']];
+const list=(p,a,o)=>a.map((t,i)=>ch(p+(i+1),t,o));
+const BLOCKS=[
+{id:'demo',v1:1,t:'О вас',s:'Не указывайте ФИО и телефон.',q:[
+ nm('age','Возраст (полных лет)',{min:14,max:100}),ch('sex','Пол',[['M','Мужской'],['F','Женский']]),
+ ch('dur','Как давно беспокоят симптомы в области челюсти?',[['<3m','Меньше 3 месяцев'],['3-6m','3–6 месяцев'],['6-12m','6–12 месяцев'],['1-3y','1–3 года'],['>3y','Больше 3 лет']]),
+ mu('comor','Сопутствующие заболевания',[['ag','Повышенное давление'],['dm','Сахарный диабет'],['thy','Заболевания щитовидной железы'],['art','Артрит, ревматические болезни'],['fm','Фибромиалгия, хронические боли'],['mig','Мигрень, частые головные боли'],['brx','Бруксизм'],['tr','Травма головы или челюсти'],['psy','Диагностированы тревога или депрессия'],['none','Ничего из перечисленного']]),
+ tx('hist','Что ещё важно знать врачу: прошлое лечение челюсти, ортодонтия, операции',{opt:1})]},
+{id:'gcps',t:'Боль',s:'Боль в области лица, челюсти, виска или перед ухом.',q:[
+ ch('gp','Была ли такая боль за последние 30 дней?',[['Y','Да'],['N','Нет']]),
+ ...[['g1','Какова ваша боль СЕЙЧАС?','Нет боли','Худшая боль'],['g2','Какой была САМАЯ СИЛЬНАЯ боль за 30 дней?','Нет боли','Худшая боль'],['g3','Какой была СРЕДНЯЯ боль за 30 дней?','Нет боли','Худшая боль'],
+ ['g4','Насколько боль мешала повседневным делам за 30 дней?','Не мешала','Не могу делать ничего'],['g5','Насколько боль мешала отдыху, общению, семье?','Не мешала','Не могу делать ничего'],['g6','Насколько боль мешала работе или учёбе?','Не мешала','Не могу работать']].map(a=>({...sc(...a),if:A=>A.gp==='Y'})),
+ {...nm('g7','Сколько дней из последних 30 боль не давала заниматься обычными делами?',{min:0,max:30}),if:A=>A.gp==='Y'}]},
+{id:'jfls',t:'Функция челюсти',s:'Насколько ограничено каждое действие за последний месяц? 0: нет ограничений, 10: совсем не могу.',q:
+ ['Жевать жёсткую пищу','Жевать курицу','Есть мягкую пищу (пюре, йогурт)','Открывать рот, чтобы пить из чашки','Глотать','Зевать','Разговаривать','Улыбаться'].map((t,i)=>sc('j'+(i+1),t,'Нет ограничений','Совсем не могу'))},
+{id:'gad',t:'Тревога',s:'За последние 2 недели как часто вас беспокоило следующее?',q:list('a',['Нервозность, тревога, ощущение «на пределе»','Не удавалось остановить или контролировать беспокойство','Слишком много беспокойства по разным поводам','Трудно расслабиться','Такое беспокойство, что трудно усидеть на месте','Вы легко раздражались или злились','Страх, что может случиться что-то ужасное'],F4)},
+{id:'phq',t:'Настроение',s:'За последние 2 недели как часто вас беспокоило следующее?',q:[...list('d',['Мало интереса или удовольствия от дел','Подавленность, уныние, безысходность','Трудности со сном: засыпание, пробуждения или слишком много сна','Усталость, мало энергии','Плохой аппетит или переедание','Низкая самооценка, чувство вины, ощущение, что подвели себя или близких','Трудно сосредоточиться (чтение, телевизор)','Заторможенность, заметная окружающим, или наоборот суетливость','Мысли, что лучше бы умереть, или о причинении себе вреда'],F4),
+ ch('dfn','Насколько эти проблемы затрудняли работу, домашние дела, общение?',[[0,'Совсем не затрудняли'],[1,'Немного'],[2,'Очень'],[3,'Крайне']])]},
+{id:'psqi',t:'Сон',s:'Только за последний месяц.',q:[
+ tm('p1','Во сколько вы обычно ложились спать?'),nm('p2','Сколько минут вы обычно засыпали?',{min:0,max:600}),tm('p3','Во сколько вы обычно вставали утром?'),nm('p4','Сколько часов в сутки вы реально спали? (может отличаться от времени в постели)',{min:0,max:16,step:.5}),
+ ...[['a','Не засыпали в течение 30 минут'],['b','Просыпались ночью или рано утром'],['c','Вставали ночью в туалет'],['d','Было трудно дышать во сне'],['e','Кашляли или громко храпели'],['f','Мёрзли'],['g','Было слишком жарко'],['h','Снились плохие сны'],['i','Беспокоила боль'],['j','Другие причины']].map(([s,t])=>ch('p5'+s,'Как часто сон нарушался, потому что вы: '+t.charAt(0).toLowerCase()+t.slice(1),PF)),
+ ch('p6','Как бы вы оценили качество сна?',[[0,'Очень хорошее'],[1,'Скорее хорошее'],[2,'Скорее плохое'],[3,'Очень плохое']]),
+ ch('p7','Как часто вы принимали снотворные (по рецепту или без)?',PF),ch('p8','Как часто вам было трудно бодрствовать за рулём, за едой или в общении?',PF),
+ ch('p9','Насколько трудно было поддерживать энтузиазм, чтобы делать дела?',[[0,'Не было проблемы'],[1,'Небольшая'],[2,'Заметная'],[3,'Серьёзная']])]},
+{id:'obc',t:'Привычки челюсти',s:'Как часто за последний месяц вы это делали?',q:[
+ ...list('o',['Сжимали или скрипели зубами во сне (по вашим наблюдениям или словам близких)','Спали в положении, при котором давление на челюсть (на животе, на боку)'],OS),
+ ...list('o',['Скрипели зубами днём','Сжимали зубы днём','Прижимали или держали зубы сомкнутыми, не во время еды','Напрягали мышцы лица без сжатия зубов','Выдвигали челюсть вперёд или в сторону','Сильно прижимали язык к зубам','Держали язык между зубами','Кусали или жевали язык, щёки, губы','Держали челюсть в напряжённом положении, «страхуя» её','Удерживали зубами предметы (ручка, ногти, волосы)','Жевали жевательную резинку','Играли на инструменте, задействующем рот или челюсть','Подпирали челюсть рукой','Жевали только одной стороной','Перекусывали между приёмами пищи (то, что надо жевать)','Подолгу говорили (преподавание, продажи, обслуживание)','Пели','Зевали','Держали телефон между плечом и головой'],OW).map((q,i)=>({...q,k:'o'+(i+3)}))].map((q,i)=>({...q,k:'o'+(i+1)}))},
+{id:'med',t:'Лекарства',s:'Всё, что принимаете сейчас или принимали за последний месяц: антидепрессанты, обезболивающие, миорелаксанты, снотворные, другие.',q:[{k:'meds',y:'med'}]},
+{id:'life',t:'Образ жизни',s:'',q:[
+ ch('act','Физическая активность в неделю',[['0','Почти нет'],['1','1–2 раза'],['2','3–4 раза'],['3','5 и более раз']]),
+ nm('caf','Чашек кофе, чая, энергетиков в день (всего)',{min:0,max:30}),
+ ch('smk','Курение',[['n','Не курю'],['x','Бросил(а)'],['c','Сигареты'],['v','Вейп, электронные сигареты']]),
+ {...nm('smn','Сколько в день (сигарет или затяжек вейпа)',{min:0,max:200}),if:A=>A.smk==='c'||A.smk==='v'},
+ ch('alc','Алкоголь',[['n','Не употребляю'],['r','Реже раза в неделю'],['w','1–3 раза в неделю'],['d','Почти каждый день']]),
+ nm('scr','Часов в день за компьютером или телефоном',{min:0,max:24}),
+ sc('str','Уровень стресса за последний месяц','Нет стресса','Очень сильный')]}];
+const num=v=>Number(v)||0, sumk=(A,p,n)=>Array.from({length:n},(_,i)=>num(A[p+(i+1)])).reduce((a,b)=>a+b,0);
+function score(A){const S={};
+ if(A.gp==='Y'){const cpi=(num(A.g1)+num(A.g2)+num(A.g3))/3*10,inf=(num(A.g4)+num(A.g5)+num(A.g6))/3*10,d=num(A.g7);
+  const dp=(d<7?0:d<15?1:d<30?2:3)+(inf<30?0:inf<50?1:inf<70?2:3);Object.assign(S,{gcps_grade:dp>=5?4:dp>=3?3:cpi>=50?2:1,gcps_cpi:+cpi.toFixed(1),gcps_interf:+inf.toFixed(1),gcps_dis_pts:dp,gcps_days:d});}
+ else Object.assign(S,{gcps_grade:0,gcps_cpi:0,gcps_interf:0,gcps_dis_pts:0,gcps_days:0});
+ S.jfls8=+(sumk(A,'j',8)/8).toFixed(2);S.gad7=sumk(A,'a',7);S.phq9=sumk(A,'d',9);S.phq9_item9=num(A.d9);S.obc=sumk(A,'o',21);
+ const t2m=s=>{const[a,b]=String(s||'0:0').split(':').map(Number);return a*60+b},inb=((t2m(A.p3)-t2m(A.p1)+1440)%1440)/60,sl=num(A.p4),lat=num(A.p2);
+ const c=[num(A.p6)],ls=(lat<=15?0:lat<=30?1:lat<=60?2:3)+num(A.p5a);c.push(ls===0?0:ls<=2?1:ls<=4?2:3);c.push(sl>7?0:sl>=6?1:sl>=5?2:3);
+ const ef=inb>0?Math.min(sl/inb*100,100):0;c.push(ef>85?0:ef>=75?1:ef>=65?2:3);
+ const ds=['b','c','d','e','f','g','h','i','j'].reduce((a,x)=>a+num(A['p5'+x]),0);c.push(ds===0?0:ds<=9?1:ds<=18?2:3);c.push(num(A.p7));const dd=num(A.p8)+num(A.p9);c.push(dd===0?0:dd<=2?1:dd<=4?2:3);
+ c.forEach((v,i)=>S['psqi_c'+(i+1)]=v);S.psqi=c.reduce((a,b)=>a+b,0);S.psqi_eff=+ef.toFixed(0);
+ S.med_count=A.mednone?0:(A.meds||[]).filter(m=>m.n&&m.n.trim()).length;S.alert=(S.phq9_item9>0||S.phq9>=20)?1:0;return S;}
+const st={A:{},bi:0,id:null,visit:1,blocks:[]};
+const K=()=>'cc_draft_'+st.id+'_'+st.visit;
+const save=()=>{try{localStorage.setItem(K(),JSON.stringify({A:st.A,bi:st.bi}))}catch(e){}};
+async function api(body,tries=3){let err;for(let i=0;i<tries;i++){const c=new AbortController(),t=setTimeout(()=>c.abort(),30000);
+ try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body),signal:c.signal});const j=await r.json();if(j.status==='error'){j.fatal=1;throw j}return j}
+ catch(e){err=e;if(e.fatal)break;if(i<tries-1)await new Promise(r=>setTimeout(r,1500*2**i+Math.random()*1000))}finally{clearTimeout(t)}}throw err}
+const OTHER='<p><button class="link" id="ot">Это не ваш код? Начать с другим кодом</button></p>';
+const show=h=>{app.innerHTML=h;nav.className='hide';scrollTo(0,0);const o=$('#ot');if(o)o.onclick=()=>{localStorage.removeItem('cc_id');home()}};
+const setCode=()=>{const c=$('#code');if(st.id){c.textContent='Код '+st.id;c.className=''}else c.className='hide'};
+const msg=e=>e&&e.message?e.message:'Нет связи. Проверьте интернет и повторите.';
+function home(){st.id=null;setCode();$('#bar i').style.width='0';show(`<h1>Анкета пациента</h1><p class="sub">Заполнение займёт около 20 минут.</p>
+<button class="pri" id="go" style="width:100%">Начать первую анкету</button><p class="err" id="e"></p><button class="link" id="have">У меня уже есть код</button>`);
+ $('#go').onclick=async()=>{$('#go').disabled=true;$('#e').textContent='';try{const r=await api({action:'register'});st.id=r.id;localStorage.setItem('cc_id',r.id);start()}catch(e){$('#e').textContent=msg(e);$('#go').disabled=false}};
+ $('#have').onclick=()=>enter();}
+function enter(m){show(`<h1>Ваш код</h1><p class="sub">Он выдавался при первой анкете.</p><input type="text" id="ci" maxlength="12" autocapitalize="characters" placeholder="Например K7M4QP" style="text-transform:uppercase">
+<p class="err" id="e">${m||''}</p><button class="pri" id="ok" style="width:100%">Продолжить</button><button class="link" id="bk">Назад</button>`);
+ $('#bk').onclick=home;$('#ok').onclick=()=>{const v=$('#ci').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');if(v.length<4)return;st.id=v;start()}}
+async function start(){setCode();show('<p class="sub">Загрузка…</p>');let r;
+ try{r=await api({action:'status',id:st.id})}catch(e){if(e.fatal){localStorage.removeItem('cc_id');return enter('Код не найден. Проверьте и повторите.')}
+  return show(`<p class="err">${msg(e)}</p><button class="pri" id="r" style="width:100%">Повторить</button>`),$('#r').onclick=start}
+ localStorage.setItem('cc_id',st.id);
+ if(r.finished)return show(`<h1>Все три анкеты заполнены</h1><p class="sub">Спасибо! Больше ничего делать не нужно.</p>${OTHER}`);
+ if(!r.open)return show(`<h1>Следующая анкета</h1><p class="sub">Анкета ${r.visit} из 3 откроется ${r.due}. Сохраните код и эту ссылку.</p><div class="big">${st.id}</div>${linkBtn()}${OTHER}`),bindLink();
+ st.visit=r.visit;st.blocks=BLOCKS.filter(b=>!b.v1||st.visit===1);st.A={};st.bi=0;
+ try{const d=JSON.parse(localStorage.getItem(K())||'null');if(d){st.A=d.A||{};st.bi=Math.min(d.bi||0,st.blocks.length-1)}}catch(e){}
+ if(st.bi>0||Object.keys(st.A).length)return show(`<h1>Анкета ${st.visit} из 3</h1><p class="sub">У вас есть начатая анкета.</p><button class="pri" id="c" style="width:100%">Продолжить</button><button class="link" id="n">Начать заново</button>${OTHER}`),
+  $('#c').onclick=block,$('#n').onclick=()=>{st.A={};st.bi=0;save();block()};
+ show(`<h1>Анкета ${st.visit} из 3</h1><p class="sub">Около ${st.visit===1?20:15} минут. Ответы сохраняются, можно вернуться позже.</p><button class="pri" id="c" style="width:100%">Начать</button>${OTHER}`);$('#c').onclick=block}
+const linkBtn=()=>'<button class="pri" id="cl" style="width:100%">Скопировать ссылку для следующего раза</button><p class="sub" id="cm"></p>';
+const myLink=()=>location.origin+location.pathname+'?id='+st.id;
+function bindLink(){const b=$('#cl');if(b)b.onclick=async()=>{try{await navigator.clipboard.writeText(myLink());$('#cm').textContent='Ссылка скопирована.'}catch(e){$('#cm').textContent=myLink()}}}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function qHTML(q){const v=st.A[q.k];if(q.y==='med')return medHTML();let h=`<div class="q" data-k="${q.k}"><p>${esc(q.t)}</p>`;
+ if(q.y==='sc')h+='<div class="sc">'+[...Array(11).keys()].map(i=>`<button type="button" data-v="${i}" class="${v===i?'on':''}">${i}</button>`).join('')+`</div><div class="ends"><span>${q.lo}</span><span>${q.hi}</span></div>`;
+ else if(q.y==='ch')h+='<div class="ch">'+q.o.map(([x,l])=>`<button type="button" data-v="${x}" class="${String(v)===String(x)?'on':''}">${l}</button>`).join('')+'</div>';
+ else if(q.y==='mu')h+=q.o.map(([x,l])=>`<label class="cb"><input type="checkbox" data-m="${x}" ${(v||[]).includes(x)?'checked':''}>${l}</label>`).join('');
+ else if(q.y==='t')h+=`<textarea data-i="1" maxlength="1500">${esc(v||'')}</textarea>`;
+ else h+=`<input data-i="1" type="${q.y==='tm'?'time':'number'}" inputmode="${q.y==='n'?'decimal':'text'}" ${q.min!=null?`min="${q.min}" max="${q.max}"`:''} step="${q.step||1}" value="${esc(v==null?'':v)}">`;
+ return h+'</div>'}
+function medHTML(){const M=st.A.meds&&st.A.meds.length?st.A.meds:[{}];st.A.meds=M;
+ return `<div class="q" data-k="meds"><label class="cb"><input type="checkbox" id="mn" ${st.A.mednone?'checked':''}>Лекарства не принимаю</label><div id="ml" class="${st.A.mednone?'hide':''}">`+M.map((m,i)=>`<div class="med" data-r="${i}"><input type="text" data-f="n" placeholder="Название препарата" value="${esc(m.n||'')}"><input type="text" data-f="d" placeholder="Дозировка (например 50 мг, 1 раз в день)" value="${esc(m.d||'')}"><input type="text" data-f="l" placeholder="Сколько времени принимаете" value="${esc(m.l||'')}"><input type="text" data-f="i" placeholder="Для чего (показание)" value="${esc(m.i||'')}"><select data-f="c"><option value="">Изменения терапии…</option>${[['no','Без изменений'],['new','Начат недавно'],['dose','Изменена доза'],['stop','Отменён']].map(([x,l])=>`<option value="${x}" ${m.c===x?'selected':''}>${l}</option>`).join('')}</select></div>`).join('')+`<button type="button" class="link" id="ma">+ Добавить препарат</button></div></div>`}
+function applyIf(){document.querySelectorAll('.q[data-k]').forEach(e=>{const q=st.cur.find(x=>x.k===e.dataset.k);if(q&&q.if)e.classList.toggle('hide',!q.if(st.A))})}
+function block(){const b=st.blocks[st.bi];st.cur=b.q;setCode();$('#bar i').style.width=(st.bi/st.blocks.length*100)+'%';
+ show(`<h2>${b.t}</h2><p class="sub">${b.s||''}</p>`+b.q.map(qHTML).join('')+'<p class="err" id="e"></p>');applyIf();
+ nav.className='';nav.innerHTML=(st.bi>0?'<button id="pv">Назад</button>':'')+`<button class="pri" id="nx">${st.bi===st.blocks.length-1?'Отправить':'Далее'}</button>`;
+ $('#nx').onclick=next;if($('#pv'))$('#pv').onclick=()=>{st.bi--;save();block()}}
+app.addEventListener('click',e=>{const b=e.target.closest('button[data-v]');if(b){const k=b.closest('.q').dataset.k;const raw=b.dataset.v;st.A[k]=/^\d+$/.test(raw)?+raw:raw;b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));b.closest('.q').classList.remove('bad');applyIf();save()}
+ if(e.target.id==='ma'){st.A.meds.push({});const k=app.querySelector('[data-k=meds]');k.outerHTML=medHTML();save()}});
+app.addEventListener('change',e=>{const t=e.target,q=t.closest('.q');if(!q)return;const k=q.dataset.k;
+ if(t.dataset.m!==undefined){const s=new Set(st.A[k]||[]);t.checked?s.add(t.dataset.m):s.delete(t.dataset.m);if(t.dataset.m==='none'&&t.checked){s.clear();s.add('none');q.querySelectorAll('input').forEach(i=>i.checked=i.dataset.m==='none')}else if(s.has('none')){s.delete('none');q.querySelector('[data-m=none]').checked=false}st.A[k]=[...s]}
+ else if(t.id==='mn'){st.A.mednone=t.checked;$('#ml').classList.toggle('hide',t.checked)}
+ else if(t.dataset.f){const r=t.closest('.med').dataset.r;st.A.meds[r][t.dataset.f]=t.value}
+ else if(t.dataset.i)st.A[k]=t.type==='number'?(t.value===''?undefined:+t.value):t.value;q.classList.remove('bad');applyIf();save()});
+function missing(){const out=[];st.cur.forEach(q=>{if(q.opt||(q.if&&!q.if(st.A)))return;const v=st.A[q.k];let ok;
+ if(q.y==='med')ok=st.A.mednone||(st.A.meds||[]).some(m=>m.n&&m.n.trim());else if(q.y==='mu')ok=v&&v.length;else if(q.y==='tm'||q.y==='t')ok=v;else ok=v!==undefined&&v!==''&&!Number.isNaN(v);
+ if(ok&&q.min!=null&&(v<q.min||v>q.max))ok=false;if(!ok)out.push(q.k)});return out}
+async function next(){const m=missing();document.querySelectorAll('.q.bad').forEach(e=>e.classList.remove('bad'));
+ if(m.length){m.forEach(k=>{const e=app.querySelector(`[data-k=${k}]`);e&&e.classList.add('bad')});$('#e').textContent='Ответьте, пожалуйста, на все выделенные вопросы.';const f=app.querySelector('.q.bad');f&&f.scrollIntoView({block:'center',behavior:'smooth'});return}
+ if(st.bi<st.blocks.length-1){st.bi++;save();return block()}
+ await submit()}
+async function submit(){nav.className='hide';show('<p class="sub">Отправляем ответы…</p>');const A=JSON.parse(JSON.stringify(st.A)),S=score(A);
+ let uid=localStorage.getItem('cc_uuid_'+K());if(!uid){uid=crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random();localStorage.setItem('cc_uuid_'+K(),uid)}
+ const payload={action:'submit',record_uuid:uid,participant_id:st.id,visit:st.visit,datetime:new Date().toISOString(),scores:S,answers:A};
+ try{const r=await api(payload,4);try{localStorage.removeItem(K())}catch(e){}done(S,r)}
+ catch(e){show(`<h1>Не удалось отправить</h1><p class="sub">${esc(msg(e))} Ответы сохранены на этом устройстве.</p><button class="pri" id="r" style="width:100%">Повторить отправку</button>`);$('#r').onclick=submit}}
+function done(S,r){$('#bar i').style.width='100%';const last=st.visit>=3;
+ show(`<h1>Анкета ${st.visit} из 3 отправлена</h1>`+(S.alert?`<div class="warn"><b>Если у вас есть мысли о причинении себе вреда</b>, пожалуйста, сегодня же обратитесь за помощью: позвоните по номеру 112 или сообщите врачу.</div>`:'')+
+ (last?'<p class="sub">Спасибо! Все три анкеты заполнены.</p>':`<p class="sub">Следующая анкета: ${r.next_due||''}. Запишите или сфотографируйте свой код. Он понадобится в следующий раз.</p><div class="big">${st.id}</div>${linkBtn()}`));bindLink()}
+(async()=>{if(qp.get('new')){localStorage.removeItem('cc_id');return home()}const id=(qp.get('id')||localStorage.getItem('cc_id')||'').toUpperCase().replace(/[^A-Z0-9]/g,'');if(id.length>=4){st.id=id;start()}else home()})();
+</script></body></html>
