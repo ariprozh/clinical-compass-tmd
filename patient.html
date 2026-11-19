@@ -21,6 +21,12 @@ textarea{min-height:80px}label.cb{display:flex;gap:8px;align-items:center;paddin
 nav{position:fixed;left:0;right:0;bottom:0;background:var(--c);border-top:1px solid var(--l);padding:10px 14px;display:flex;gap:10px;justify-content:center}nav button{flex:1;max-width:240px;text-align:center}
 .big{font:700 34px ui-monospace,monospace;letter-spacing:4px;text-align:center;background:var(--c);border:2px dashed var(--b);border-radius:14px;padding:16px;margin:14px 0}
 .warn{background:#fff1f2;color:#881337;border:1px solid #fda4af;border-radius:12px;padding:12px;margin:12px 0}.err{color:var(--er);min-height:22px;margin:8px 0}
+.summary{background:var(--c);border:1px solid var(--l);border-radius:16px;padding:18px;margin:16px 0;box-shadow:0 4px 18px #0f4c8110}
+.summary h2{margin:0 0 8px;color:var(--b)}.summary p{margin:7px 0}.summary ul{margin:6px 0;padding-left:20px}
+.summary-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.summary-actions button{flex:1;text-align:center}
+.summary-note{font-size:13px;color:var(--m)}
+@media print{body{background:#fff;color:#111}header,#bar,nav,.summary-actions,.link{display:none!important}main{max-width:none;padding:0}.summary{box-shadow:none;border:1px solid #bbb;break-inside:avoid}.big{display:none}}
+
 </style></head><body>
 <header><b>Клинический Компас</b><span id="code" class="hide"></span></header><div id="bar"><i></i></div>
 <main id="app"></main><nav id="nav" class="hide"></nav>
@@ -174,8 +180,42 @@ async function submit(){nav.className='hide';show('<p class="sub">Отправл
  const payload={action:'submit',record_uuid:uid,participant_id:st.id,visit:st.visit,datetime:new Date().toISOString(),scores:S,answers:A};
  try{const r=await api(payload,4);try{localStorage.removeItem(K())}catch(e){}done(S,r)}
  catch(e){show(`<h1>Не удалось отправить</h1><p class="sub">${esc(msg(e))} Ответы сохранены на этом устройстве.</p><button class="pri" id="r" style="width:100%">Повторить отправку</button>`);$('#r').onclick=submit}}
+function dateText(d){return new Intl.DateTimeFormat('ru-RU',{day:'2-digit',month:'long',year:'numeric'}).format(d)}
+function makeSummary(A,S,r){
+ const now=new Date(), due=new Date(now);due.setDate(due.getDate()+14);
+ const fmt=v=>v===undefined||v===null||v===''?'не указано':String(v);
+ const pain=A.gp==='Y'?'Да':A.gp==='N'?'Нет':'Не указано';
+ const lines=[];
+ lines.push('Краткая сводка ответов SmartAIR TMD');
+ lines.push('Код участника: '+st.id);
+ lines.push('Дата заполнения (T'+(st.visit-1)+'): '+dateText(now));
+ lines.push('Боль за последние 30 дней: '+pain+'.');
+ if(A.gp==='Y'){
+  lines.push('Боль сейчас: '+fmt(A.g1)+'/10; максимальная за 30 дней: '+fmt(A.g2)+'/10; средняя: '+fmt(A.g3)+'/10.');
+  lines.push('Влияние боли на повседневную активность: '+fmt(A.g4)+'/10; отдых и общение: '+fmt(A.g5)+'/10; работу/учёбу: '+fmt(A.g6)+'/10.');
+  lines.push('Дней с ограничением обычной активности: '+fmt(A.g7)+' из 30.');
+ }
+ lines.push('Функция челюсти (JFLS-8, среднее): '+S.jfls8+'/10.');
+ lines.push('Тревожные симптомы (GAD-7): '+S.gad7+'/21.');
+ lines.push('Симптомы депрессии (PHQ-9): '+S.phq9+'/27.');
+ lines.push('Качество сна (PSQI): '+S.psqi+'/21.');
+ const meds=(A.mednone?'Не принимает лекарства (по ответу).':(A.meds||[]).filter(m=>m.n&&m.n.trim()).map(m=>m.n+(m.d?' — '+m.d:'')).join('; '));
+ lines.push('Лекарства: '+(meds||'не указаны')+'.');
+ if(st.visit<3)lines.push('Ориентировочная дата следующего заполнения (через 14 дней): '+dateText(due)+'.');
+ lines.push('Это краткий пересказ ответов анкеты, а не диагноз и не медицинское заключение.');
+ return {text:lines.join('\\n'),due:st.visit<3?dateText(due):null};
+}
 function done(S,r){$('#bar i').style.width='100%';const last=st.visit>=3;
+ const summary=makeSummary(st.A,S,r);
  show(`<h1>Анкета ${st.visit} из 3 отправлена</h1>`+(S.alert?`<div class="warn"><b>Если у вас есть мысли о причинении себе вреда</b>, пожалуйста, сегодня же обратитесь за помощью: позвоните по номеру 112 или сообщите врачу.</div>`:'')+
- (last?'<p class="sub">Спасибо! Все три анкеты заполнены.</p>':`<p class="sub">Следующая анкета: ${r.next_due||''}. Запишите или сфотографируйте свой код. Он понадобится в следующий раз.</p><div class="big">${st.id}</div>${linkBtn()}`));bindLink()}
+ `<section class="summary" id="patientSummary"><h2>Ваши ответы — краткая сводка</h2>
+ <p><b>Код участника:</b> ${esc(st.id)}</p><p><b>Дата заполнения (T${st.visit-1}):</b> ${dateText(new Date())}</p>
+ <ul>${(summary.text.split('\\n').slice(3,-(last?1:2))).map(x=>'<li>'+esc(x)+'</li>').join('')}</ul>
+ ${last?'<p><b>Спасибо! Все три анкеты заполнены.</b></p>':`<p><b>Следующий чек-ап (ориентировочно):</b> ${summary.due}</p>`}
+ <p class="summary-note">Это структурированный пересказ ваших ответов, а не диагноз или медицинское заключение.</p>
+ <div class="summary-actions"><button class="pri" id="copySummary">Скопировать текст для врача</button><button id="printSummary">Сохранить / распечатать</button></div></section>`+
+ (last?'<p class="sub">Спасибо за участие!</p>':`<p class="sub">Сохраните код участника — он понадобится для следующего заполнения.</p><div class="big">${st.id}</div>${linkBtn()}`));
+ const cp=$('#copySummary');if(cp)cp.onclick=async()=>{try{await navigator.clipboard.writeText(summary.text);cp.textContent='Скопировано'}catch(e){const ta=document.createElement('textarea');ta.value=summary.text;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');cp.textContent='Скопировано'}catch(x){cp.textContent='Не удалось скопировать'}ta.remove()}};
+ const pr=$('#printSummary');if(pr)pr.onclick=()=>window.print();bindLink()}
 (async()=>{if(qp.get('new')){localStorage.removeItem('cc_id');return home()}const id=(qp.get('id')||localStorage.getItem('cc_id')||'').toUpperCase().replace(/[^A-Z0-9]/g,'');if(id.length>=4){st.id=id;start()}else home()})();
 </script></body></html>
