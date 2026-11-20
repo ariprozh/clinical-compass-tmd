@@ -46,11 +46,11 @@ const DD=[['Это не ваш код? Начать с другим кодом',
 ['Об исследовании SmartAIR TMD','About the SmartAIR TMD study'],
 ['Это исследование посвящено боли в области челюсти, функции нижней челюсти, качеству сна и самочувствию.','This study is about pain in the jaw area, jaw function, sleep quality and well-being.'],
 ['Цель — изучить, как эти показатели связаны между собой и как меняются со временем. Анкету предлагают заполнить сейчас, а затем повторить через 2 и 6 недель.','The aim is to study how these measures are related and how they change over time. You are invited to complete the questionnaire now and repeat it after 2 and 6 weeks.'],
-['Заполнение занимает около 20 минут.','Completion takes about 20 minutes.'],[' Участие добровольное. Вы можете отказаться или прекратить заполнение в любой момент.',' Participation is voluntary. You may decline or stop at any time.'],
+['Заполнение занимает около 5 минут.','Completion takes about 5 minutes.'],[' Участие добровольное. Вы можете отказаться или прекратить заполнение в любой момент.',' Participation is voluntary. You may decline or stop at any time.'],
 ['Анкета не заменяет консультацию врача и не предназначена для постановки диагноза. Не указывайте в свободных ответах имя, адрес и другие сведения, по которым вас можно узнать.','The questionnaire does not replace a consultation with a doctor and is not intended to establish a diagnosis. Do not enter your name, address or other information that could identify you in free-text answers.'],
 ['Я прочитал(а) информацию, понял(а) её и добровольно согласен(на) участвовать в исследовании SmartAIR TMD.','I have read the information, understood it and voluntarily agree to take part in the SmartAIR TMD study.'],
 ['Согласен(на) и продолжить','I agree and continue'],['Не согласен(на)','I do not agree'],['Не удалось открыть форму согласия. Обновите страницу.','Could not open the consent form. Please refresh the page.'],
-['Научное исследование боли в области челюсти, качества сна и самочувствия. Анкета занимает около 20 минут; повторные заполнения — через 2 и 6 недель.','A scientific study of jaw pain, sleep quality and well-being. The questionnaire takes about 20 minutes; repeat questionnaires follow after 2 and 6 weeks.'],
+['Научное исследование боли в области челюсти, качества сна и самочувствия. Анкета занимает около 5 минут; повторные заполнения — через 2 и 6 недель.','A scientific study of jaw pain, sleep quality and well-being. The questionnaire takes about 5 minutes; repeat questionnaires follow after 2 and 6 weeks.'],
 ['Начать первую анкету','Start the first questionnaire'],['У меня уже есть код','I already have a code'],['Сервер не вернул код участника. Ответ: ','The server did not return a participant code. Response: '],
 ['<h1>Ваш код</h1>','<h1>Your code</h1>'],['Он выдавался при первой анкете.','It was given to you with the first questionnaire.'],['Например K7M4QP','For example K7M4QP'],
 ['>Продолжить<','>Continue<'],['>Назад<','>Back<'],['>Далее<','>Next<'],['>Отправить<','>Submit<'],['>Повторить<','>Retry<'],['>Начать<','>Start<'],['Начать заново','Start over'],
@@ -162,7 +162,7 @@ function consent(onAccept){
  show(`<h1>Об исследовании SmartAIR TMD</h1>
  <p>Это исследование посвящено боли в области челюсти, функции нижней челюсти, качеству сна и самочувствию.</p>
  <p>Цель — изучить, как эти показатели связаны между собой и как меняются со временем. Анкету предлагают заполнить сейчас, а затем повторить через 2 и 6 недель.</p>
- <p><b>Заполнение занимает около 20 минут.</b> Участие добровольное. Вы можете отказаться или прекратить заполнение в любой момент.</p>
+ <p><b>Заполнение занимает около 5 минут.</b> Участие добровольное. Вы можете отказаться или прекратить заполнение в любой момент.</p>
  <p>Анкета не заменяет консультацию врача и не предназначена для постановки диагноза. Не указывайте в свободных ответах имя, адрес и другие сведения, по которым вас можно узнать.</p>
  <div class="q"><label class="cb"><input type="checkbox" id="consent"> Я прочитал(а) информацию, понял(а) её и добровольно согласен(на) участвовать в исследовании SmartAIR TMD.</label></div>
  <p class="err" id="e"></p>
@@ -171,10 +171,10 @@ function consent(onAccept){
  const cb=$('#consent'),btn=$('#accept'),decline=$('#decline');
  if(!cb||!btn||!decline){dbg(t('Не удалось открыть форму согласия. Обновите страницу.','Could not open the consent form. Please refresh the page.'));return}
  cb.onchange=()=>{btn.disabled=!cb.checked};
- btn.onclick=()=>{if(!cb.checked)return;btn.disabled=true;st.consent={consent:true,consent_timestamp:new Date().toISOString(),consent_version:'2026-11-21-v2'};onAccept()};
+ btn.onclick=()=>{if(!cb.checked)return;btn.disabled=true;st.consent={consent:true,consent_timestamp:new Date().toISOString(),consent_version:'2026-11-21-v3'};onAccept()};
  decline.onclick=home;
 }
-function home(){st.id=null;setCode();$('#bar i').style.width='0';show(`<h1>SmartAIR TMD</h1><p class="sub">Научное исследование боли в области челюсти, качества сна и самочувствия. Анкета занимает около 20 минут; повторные заполнения — через 2 и 6 недель.</p>
+function home(){st.id=null;setCode();$('#bar i').style.width='0';show(`<h1>SmartAIR TMD</h1><p class="sub">Научное исследование боли в области челюсти, качества сна и самочувствия. Анкета занимает около 5 минут; повторные заполнения — через 2 и 6 недель.</p>
 <button class="pri" id="go" style="width:100%">Начать первую анкету</button><p class="err" id="e"></p><button class="link" id="have">У меня уже есть код</button>`);
  $('#go').onclick=()=>consent(async()=>{
   const consentButton=$('#accept');if(consentButton)consentButton.disabled=true;const errorBox=$('#e');if(errorBox)errorBox.textContent='';
@@ -202,7 +202,7 @@ async function start(pre){setCode();show('<p class="sub">Загрузка…</p>
  try{const d=JSON.parse(localStorage.getItem(K())||'null');if(d){st.A={...(d.A||{}),...(st.consent||{})};st.bi=Math.min(d.bi||0,st.blocks.length-1)}}catch(e){}
  if(st.bi>0||Object.keys(st.A).filter(k=>!['consent','consent_timestamp','consent_version','lang'].includes(k)).length)return show(`<h1>Анкета ${st.visit} из 3</h1><p class="sub">У вас есть начатая анкета.</p><button class="pri" id="c" style="width:100%">Продолжить</button><button class="link" id="n">Начать заново</button>${OTHER}`),
   $('#c').onclick=block,$('#n').onclick=()=>{st.A={};st.bi=0;save();block()};
- show(`<h1>Анкета ${st.visit} из 3</h1><p class="sub">Около ${st.visit===1?20:15} минут. Ответы сохраняются, можно вернуться позже.</p><button class="pri" id="c" style="width:100%">Начать</button>${OTHER}`);$('#c').onclick=block}
+ show(`<h1>Анкета ${st.visit} из 3</h1><p class="sub">Около 5 минут. Ответы сохраняются, можно вернуться позже.</p><button class="pri" id="c" style="width:100%">Начать</button>${OTHER}`);$('#c').onclick=block}
 const linkBtn=()=>'<button class="pri" id="cl" style="width:100%">Скопировать ссылку для следующего раза</button><p class="sub" id="cm"></p>';
 const myLink=()=>location.origin+location.pathname+'?id='+st.id;
 function bindLink(){const b=$('#cl');if(b)b.onclick=async()=>{try{await navigator.clipboard.writeText(myLink());$('#cm').textContent=t('Ссылка скопирована.','Link copied.')}catch(e){$('#cm').textContent=myLink()}}}
