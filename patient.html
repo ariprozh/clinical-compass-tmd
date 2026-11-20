@@ -109,14 +109,16 @@ function consent(onAccept){
  <p class="err" id="e"></p>
  <button class="pri" id="accept" style="width:100%" disabled>Согласен(на) и продолжить</button>
  <button class="link" id="decline">Не согласен(на)</button>`);
- const cb=$('#consent'),btn=$('#accept');cb.onchange=()=>btn.disabled=!cb.checked;
- btn.onclick=()=>{if(!cb.checked)return;st.consent={consent:true,consent_timestamp:new Date().toISOString(),consent_version:'2026-11-20-v1'};onAccept()};
- $('#decline').onclick=home;
+ const cb=$('#consent'),btn=$('#accept'),decline=$('#decline');
+ if(!cb||!btn||!decline){dbg('Не удалось открыть форму согласия. Обновите страницу.');return}
+ cb.onchange=()=>{btn.disabled=!cb.checked};
+ btn.onclick=()=>{if(!cb.checked)return;btn.disabled=true;st.consent={consent:true,consent_timestamp:new Date().toISOString(),consent_version:'2026-11-20-v1'};onAccept()};
+ decline.onclick=home;
 }
 function home(){st.id=null;setCode();$('#bar i').style.width='0';show(`<h1>SmartAIR TMD</h1><p class="sub">Научное исследование хронической боли в области челюсти, качества сна и самочувствия. Заполнение анкеты занимает около 3 минут. Предусмотрены повторные анкеты через 2 и 4 недели.</p>
 <button class="pri" id="go" style="width:100%">Начать первую анкету</button><p class="err" id="e"></p><button class="link" id="have">У меня уже есть код</button>`);
  $('#go').onclick=()=>consent(async()=>{
-  $('#go').disabled=true;$('#e').textContent='';
+  const consentButton=$('#accept');if(consentButton)consentButton.disabled=true;const errorBox=$('#e');if(errorBox)errorBox.textContent='';
   try{
     const r=await api({action:'register'});
     const newId=r.id;
@@ -138,7 +140,7 @@ async function start(pre){setCode();show('<p class="sub">Загрузка…</p>
  if(r.finished)return show(`<h1>Все три анкеты заполнены</h1><p class="sub">Спасибо! Больше ничего делать не нужно.</p>${OTHER}`);
  if(!r.open)return show(`<h1>Следующая анкета</h1><p class="sub">Анкета ${r.visit} из 3 откроется ${r.due}. Сохраните код и эту ссылку.</p><p class="sub" style="font-size:11px">Сервер: визит ${r.visit}, открыт: ${r.open}, срок: ${r.due}</p><div class="big">${st.id}</div>${linkBtn()}${OTHER}`),bindLink();
  st.visit=r.visit;st.blocks=BLOCKS.filter(b=>!b.v1||st.visit===1);st.A={...(st.consent||{})};st.bi=0;
- try{const d=JSON.parse(localStorage.getItem(K())||'null');if(d){st.A=d.A||{};st.bi=Math.min(d.bi||0,st.blocks.length-1)}}catch(e){}
+ try{const d=JSON.parse(localStorage.getItem(K())||'null');if(d){st.A={...(d.A||{}),...(st.consent||{})};st.bi=Math.min(d.bi||0,st.blocks.length-1)}}catch(e){}
  if(st.bi>0||Object.keys(st.A).length)return show(`<h1>Анкета ${st.visit} из 3</h1><p class="sub">У вас есть начатая анкета.</p><button class="pri" id="c" style="width:100%">Продолжить</button><button class="link" id="n">Начать заново</button>${OTHER}`),
   $('#c').onclick=block,$('#n').onclick=()=>{st.A={};st.bi=0;save();block()};
  show(`<h1>Анкета ${st.visit} из 3</h1><p class="sub">Около ${st.visit===1?20:15} минут. Ответы сохраняются, можно вернуться позже.</p><button class="pri" id="c" style="width:100%">Начать</button>${OTHER}`);$('#c').onclick=block}
