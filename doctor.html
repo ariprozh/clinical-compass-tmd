@@ -31,7 +31,7 @@ td.v{font-weight:600}.d-g{color:var(--ok)}.d-r{color:var(--hi)}.tabs{display:fle
 <main><div id="tiles"></div><div class="wrap"><section id="lst"><div class="tools"><input id="q" placeholder="Поиск по коду или метке"><select id="fl"><option value="all">Все</option><option value="alert">Внимание</option><option value="late">Просрочены</option><option value="due">Пора заполнить</option><option value="wait">Ожидают</option><option value="done">Завершили</option></select></div><div id="rows"></div></section>
 <section id="dt"></section></div></main></div>
 <script>
-const ENDPOINT='https://script.google.com/macros/s/AKfycby1GxDHE7Y5ypK-qtyef1HmNh9YgfBeIKBS3-VK6T73KFycfcfvH1MYOqm0w9zXElRoYQ/exec';
+const ENDPOINT='https://script.google.com/macros/s/AKfycbwn_zif8hGwHChKC-HhXns8T5dDTorR3bI70bFfl8uGkgy3Ou_cWn9hl-oGQl_W2f9d1g/exec';
 const $=s=>document.querySelector(s),esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let KEY='',P=[],TODAY='',CUR=null,VIS=1,FL='all';const ANS={};
 const ss={get:k=>{try{return sessionStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{sessionStorage.setItem(k,v)}catch(e){}},del:k=>{try{sessionStorage.removeItem(k)}catch(e){}}};
