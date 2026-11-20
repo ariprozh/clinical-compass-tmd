@@ -99,48 +99,47 @@ const OTHER='<p><button class="link" id="ot">Это не ваш код? Нача
 const show=h=>{app.innerHTML=h;nav.className='hide';scrollTo(0,0);const o=$('#ot');if(o)o.onclick=()=>{localStorage.removeItem('cc_id');home()}};
 const setCode=()=>{const c=$('#code');if(st.id){c.textContent='Код '+st.id;c.className=''}else c.className='hide'};
 const msg=e=>e&&e.message?e.message:'Нет связи. Проверьте интернет и повторите.';
-function consent(onAccept){
- show(`<h1>О исследовании SmartAIR TMD</h1>
- <p>Это научное исследование посвящено боли в области челюсти, работе нижней челюсти, качеству сна и самочувствию.</p>
- <p>Цель — лучше понять, как эти факторы связаны между собой и как меняются со временем. Вам предложат ответить на вопросы сейчас, а затем повторить анкету через 2 и 4 недели.</p>
- <p><b>Заполнение занимает около 3 минут.</b> Участие добровольное. Вы можете отказаться от участия или прекратить заполнение в любой момент без объяснения причин.</p>
- <p>Анкета не заменяет медицинскую консультацию и не предназначена для постановки диагноза. Ответы передаются для научного исследования под кодом участника. Не указывайте в свободных ответах имя, адрес или другие сведения, по которым вас можно узнать.</p>
- <div class="q"><label class="cb"><input type="checkbox" id="consent"> Я прочитал(а) информацию выше, понял(а) её и добровольно согласен(на) принять участие в исследовании SmartAIR TMD.</label></div>
- <p class="err" id="e"></p>
- <button class="pri" id="accept" style="width:100%" disabled>Согласен(на) и продолжить</button>
- <button class="link" id="decline">Не согласен(на)</button>`);
- const cb=$('#consent'),btn=$('#accept'),decline=$('#decline');
- if(!cb||!btn||!decline){dbg('Не удалось открыть форму согласия. Обновите страницу.');return}
- cb.onchange=()=>{btn.disabled=!cb.checked};
- btn.onclick=()=>{if(!cb.checked)return;btn.disabled=true;st.consent={consent:true,consent_timestamp:new Date().toISOString(),consent_version:'2026-11-20-v1'};onAccept()};
- decline.onclick=home;
-}
-function home(){st.id=null;setCode();$('#bar i').style.width='0';show(`<h1>SmartAIR TMD</h1><p class="sub">Научное исследование хронической боли в области челюсти, качества сна и самочувствия. Заполнение анкеты занимает около 3 минут. Предусмотрены повторные анкеты через 2 и 4 недели.</p>
+function home(){st.id=null;setCode();$('#bar i').style.width='0';show(`<h1>Анкета пациента</h1><p class="sub">Заполнение займёт около 20 минут.</p>
 <button class="pri" id="go" style="width:100%">Начать первую анкету</button><p class="err" id="e"></p><button class="link" id="have">У меня уже есть код</button>`);
- $('#go').onclick=()=>consent(async()=>{
-  const consentButton=$('#accept');if(consentButton)consentButton.disabled=true;const errorBox=$('#e');if(errorBox)errorBox.textContent='';
+
+$('#go').onclick=async()=>{
+  $('#go').disabled=true;
+  $('#e').textContent='';
   try{
     const r=await api({action:'register'});
-    const newId=r.id;
-    if(r.status!=='success'||!newId)throw new Error('Сервер не вернул код участника. Ответ: '+JSON.stringify(r));
-    st.id=String(newId).toUpperCase();
-    localStorage.setItem('cc_id',st.id);
+
+    // Проверяем, какое поле с кодом вернул сервер
+    const newId = r.id;
+
+    if (r.status !== 'success' || !newId) {
+      throw new Error(
+        'Сервер не вернул код участника. Ответ: ' +
+        JSON.stringify(r)
+      );
+    }
+
+    st.id = String(newId).toUpperCase();
+    localStorage.setItem('cc_id', st.id);
     start({visit:1,open:true});
-  }catch(e){$('#e').textContent=msg(e);home()}
- });
- $('#have').onclick=()=>enter();
-}
+
+  }catch(e){
+    $('#e').textContent=msg(e);
+    $('#go').disabled=false;
+  }
+};
+
+ $('#have').onclick=()=>enter();}
 function enter(m){show(`<h1>Ваш код</h1><p class="sub">Он выдавался при первой анкете.</p><input type="text" id="ci" maxlength="12" autocapitalize="characters" placeholder="Например K7M4QP" style="text-transform:uppercase">
 <p class="err" id="e">${m||''}</p><button class="pri" id="ok" style="width:100%">Продолжить</button><button class="link" id="bk">Назад</button>`);
- $('#bk').onclick=home;$('#ok').onclick=()=>{const v=$('#ci').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');if(v.length<4)return;st.id=v;consent(()=>start())}}
+ $('#bk').onclick=home;$('#ok').onclick=()=>{const v=$('#ci').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');if(v.length<4)return;st.id=v;start()}}
 async function start(pre){setCode();show('<p class="sub">Загрузка…</p>');let r=pre;
  if(!r)try{r=await api({action:'status',id:st.id})}catch(e){if(e.fatal){localStorage.removeItem('cc_id');return enter('Код не найден. Проверьте и повторите.')}
   return show(`<p class="err">${msg(e)}</p><button class="pri" id="r" style="width:100%">Повторить</button>`),$('#r').onclick=()=>start()}
  localStorage.setItem('cc_id',st.id);
  if(r.finished)return show(`<h1>Все три анкеты заполнены</h1><p class="sub">Спасибо! Больше ничего делать не нужно.</p>${OTHER}`);
  if(!r.open)return show(`<h1>Следующая анкета</h1><p class="sub">Анкета ${r.visit} из 3 откроется ${r.due}. Сохраните код и эту ссылку.</p><p class="sub" style="font-size:11px">Сервер: визит ${r.visit}, открыт: ${r.open}, срок: ${r.due}</p><div class="big">${st.id}</div>${linkBtn()}${OTHER}`),bindLink();
- st.visit=r.visit;st.blocks=BLOCKS.filter(b=>!b.v1||st.visit===1);st.A={...(st.consent||{})};st.bi=0;
- try{const d=JSON.parse(localStorage.getItem(K())||'null');if(d){st.A={...(d.A||{}),...(st.consent||{})};st.bi=Math.min(d.bi||0,st.blocks.length-1)}}catch(e){}
+ st.visit=r.visit;st.blocks=BLOCKS.filter(b=>!b.v1||st.visit===1);st.A={};st.bi=0;
+ try{const d=JSON.parse(localStorage.getItem(K())||'null');if(d){st.A=d.A||{};st.bi=Math.min(d.bi||0,st.blocks.length-1)}}catch(e){}
  if(st.bi>0||Object.keys(st.A).length)return show(`<h1>Анкета ${st.visit} из 3</h1><p class="sub">У вас есть начатая анкета.</p><button class="pri" id="c" style="width:100%">Продолжить</button><button class="link" id="n">Начать заново</button>${OTHER}`),
   $('#c').onclick=block,$('#n').onclick=()=>{st.A={};st.bi=0;save();block()};
  show(`<h1>Анкета ${st.visit} из 3</h1><p class="sub">Около ${st.visit===1?20:15} минут. Ответы сохраняются, можно вернуться позже.</p><button class="pri" id="c" style="width:100%">Начать</button>${OTHER}`);$('#c').onclick=block}
@@ -211,13 +210,13 @@ function makeSummary(A,S,submittedAt){
  else lines.push('Все запланированные этапы заполнения завершены.');
  lines.push('');
  lines.push('Карточка содержит числовые показатели и ответы из анкеты. Она не является диагнозом, медицинским заключением или рекомендацией по лечению.');
- return {text:lines.join('\\n'),due:st.visit<3?dateText(due):null};
+ return {text:lines.join('\n'),due:st.visit<3?dateText(due):null};
 }
 function done(S,r,submittedAt){
  $('#bar i').style.width='100%';
  const last=st.visit>=3;
  const summary=makeSummary(st.A,S,submittedAt);
- const resultLines=summary.text.split('\\n').slice(4);
+ const resultLines=summary.text.split('\n').slice(4);
  show(`<h1>Анкета ${st.visit} из 3 отправлена</h1>`+
  (S.alert?`<div class="warn"><b>Если у вас есть мысли о причинении себе вреда</b>, пожалуйста, сегодня же обратитесь за помощью: позвоните по номеру 112 или сообщите врачу.</div>`:'')+
  `<section class="summary" id="patientSummary">
@@ -226,7 +225,7 @@ function done(S,r,submittedAt){
  <p><b>Код участника:</b> ${esc(st.id)}</p>
  <p><b>Дата заполнения (T${st.visit-1}):</b> ${dateText(submittedAt)}</p>
  <div class="summary-results"><b>Показатели по заполненным шкалам и вопросам</b>
- <ul>${resultLines.filter(x=>x&&!x.startsWith('Ориентировочная дата')&&!x.startsWith('Все запланированные')&&!x.startsWith('Карточка содержит')).map(x=>'<li>'+esc(x)+'</li>').join('')}</ul></div>
+ <ul>${resultLines.filter(x=>x&&!x.startsWith('Показатели по')&&!x.startsWith('Ориентировочная дата')&&!x.startsWith('Все запланированные')&&!x.startsWith('Карточка содержит')).map(x=>'<li>'+esc(x)+'</li>').join('')}</ul></div>
  ${last?'<p><b>Все запланированные этапы заполнения завершены.</b></p>':`<p><b>Следующее заполнение (ориентировочно):</b> ${summary.due}</p>`}
  <p class="summary-note">Здесь приведены только ваши ответы и рассчитанные по ним баллы. Карточка не устанавливает диагноз и не содержит рекомендаций по лечению.</p>
  <div class="summary-actions"><button class="pri" id="copySummary">Скопировать результаты</button><button id="printSummary">Сохранить / распечатать</button></div>
