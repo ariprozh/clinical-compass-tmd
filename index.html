@@ -28,7 +28,7 @@ nav{position:fixed;left:0;right:0;bottom:0;background:var(--c);border-top:1px so
 @media print{body{background:#fff;color:#111}header,#bar,nav,.summary-actions,.link{display:none!important}main{max-width:none;padding:0}.summary{box-shadow:none;border:1px solid #bbb;break-inside:avoid}.big{display:none}}
 
 </style></head><body>
-<header><b>Клинический Компас</b><span id="code" class="hide"></span></header><div id="bar"><i></i></div>
+<header><b>Клинический Компас</b><span id="code" class="hide"></span><button class="link" id="lg" style="margin-left:auto">English</button></header><div id="bar"><i></i></div>
 <main id="app"></main><nav id="nav" class="hide"></nav>
 <script>
 const DEFAULT_ENDPOINT='https://script.google.com/macros/s/AKfycbwLtpdyywnyGJ5gV4ruddis3K9-zSq7qHLh_8UFruNj3KC0481AUzpMiB8haZc-cFc28Q/exec';
@@ -37,6 +37,65 @@ const API=(ep&&ep.startsWith('https://script.google.com/'))?ep:DEFAULT_ENDPOINT;
 const $=s=>document.querySelector(s), app=$('#app'), nav=$('#nav');
 const dbg=m=>{let b=$('#dbg');if(!b){b=document.createElement('pre');b.id='dbg';b.style.cssText='position:fixed;left:0;right:0;bottom:64px;margin:0;padding:8px;font:11px monospace;background:#fff1f2;color:#881337;white-space:pre-wrap;z-index:9';document.body.appendChild(b)}b.textContent=m};
 addEventListener('error',e=>dbg('Ошибка страницы: '+e.message));addEventListener('unhandledrejection',e=>dbg('Ошибка: '+(e.reason&&e.reason.message||e.reason)));
+
+// ======================= ЯЗЫК / LANGUAGE =======================
+let LANG=(()=>{const q=qp.get('lang');if(q==='en'||q==='ru'){try{localStorage.setItem('cc_lang',q)}catch(e){}return q}try{const v=localStorage.getItem('cc_lang');return v==='en'||v==='ru'?v:null}catch(e){return null}})();
+let EN=LANG==='en';
+const t=(ru,en)=>EN?en:ru;
+const DD=[['Это не ваш код? Начать с другим кодом','Not your code? Start with a different code'],['Нет связи. Проверьте интернет и повторите.','No connection. Check your internet and try again.'],
+['Об исследовании SmartAIR TMD','About the SmartAIR TMD study'],
+['Это исследование посвящено боли в области челюсти, функции нижней челюсти, качеству сна и самочувствию.','This study is about pain in the jaw area, jaw function, sleep quality and well-being.'],
+['Цель — изучить, как эти показатели связаны между собой и как меняются со временем. Анкету предлагают заполнить сейчас, а затем повторить через 2 и 6 недель.','The aim is to study how these measures are related and how they change over time. You are invited to complete the questionnaire now and repeat it after 2 and 6 weeks.'],
+['Заполнение занимает около 20 минут.','Completion takes about 20 minutes.'],[' Участие добровольное. Вы можете отказаться или прекратить заполнение в любой момент.',' Participation is voluntary. You may decline or stop at any time.'],
+['Анкета не заменяет консультацию врача и не предназначена для постановки диагноза. Не указывайте в свободных ответах имя, адрес и другие сведения, по которым вас можно узнать.','The questionnaire does not replace a consultation with a doctor and is not intended to establish a diagnosis. Do not enter your name, address or other information that could identify you in free-text answers.'],
+['Я прочитал(а) информацию, понял(а) её и добровольно согласен(на) участвовать в исследовании SmartAIR TMD.','I have read the information, understood it and voluntarily agree to take part in the SmartAIR TMD study.'],
+['Согласен(на) и продолжить','I agree and continue'],['Не согласен(на)','I do not agree'],['Не удалось открыть форму согласия. Обновите страницу.','Could not open the consent form. Please refresh the page.'],
+['Научное исследование боли в области челюсти, качества сна и самочувствия. Анкета занимает около 20 минут; повторные заполнения — через 2 и 6 недель.','A scientific study of jaw pain, sleep quality and well-being. The questionnaire takes about 20 minutes; repeat questionnaires follow after 2 and 6 weeks.'],
+['Начать первую анкету','Start the first questionnaire'],['У меня уже есть код','I already have a code'],['Сервер не вернул код участника. Ответ: ','The server did not return a participant code. Response: '],
+['<h1>Ваш код</h1>','<h1>Your code</h1>'],['Он выдавался при первой анкете.','It was given to you with the first questionnaire.'],['Например K7M4QP','For example K7M4QP'],
+['>Продолжить<','>Continue<'],['>Назад<','>Back<'],['>Далее<','>Next<'],['>Отправить<','>Submit<'],['>Повторить<','>Retry<'],['>Начать<','>Start<'],['Начать заново','Start over'],
+['Загрузка…','Loading…'],['Код не найден. Проверьте и повторите.','Code not found. Please check it and try again.'],['Код не найден','Code not found'],
+['Все три анкеты заполнены','All three questionnaires are complete'],['Спасибо! Больше ничего делать не нужно.','Thank you! There is nothing more to do.'],['<h1>Следующая анкета</h1>','<h1>Next questionnaire</h1>'],
+['Сохраните код и эту ссылку.','Save your code and this link.'],['У вас есть начатая анкета.','You have an unfinished questionnaire.'],
+['Скопировать ссылку для следующего раза','Copy the link for next time'],['Ссылка скопирована.','Link copied.'],
+['Лекарства не принимаю','I do not take any medication'],['Название препарата','Medication name'],['Дозировка (например 50 мг, 1 раз в день)','Dose (e.g. 50 mg, once a day)'],['Сколько времени принимаете','How long you have been taking it'],['Для чего (показание)','What for (indication)'],
+['Изменения терапии…','Change in therapy…'],['Без изменений','No change'],['Начат недавно','Started recently'],['Изменена доза','Dose changed'],['Отменён','Stopped'],['+ Добавить препарат','+ Add medication'],
+['ссылку','link'],
+['Ответьте, пожалуйста, на все выделенные вопросы.','Please answer all highlighted questions.'],['Отправляем ответы…','Sending your answers…'],['Не удалось отправить','Could not send'],[' Ответы сохранены на этом устройстве.',' Your answers are saved on this device.'],['Повторить отправку','Retry sending'],
+['Этот визит уже заполнен или идёт не по порядку','This visit has already been completed or is out of order'],['Не удалось создать код, повторите','Could not create a code, please try again']];
+const DS=DD.filter(x=>x[0]!=='ссылку').sort((a,b)=>b[0].length-a[0].length);
+const RX=[[/Анкета (\d+) из 3 отправлена/g,'Questionnaire $1 of 3 submitted'],[/Анкета (\d+) из 3 откроется ([^.<]*)\./g,'Questionnaire $1 of 3 will open on $2.'],[/Анкета (\d+) из 3/g,'Questionnaire $1 of 3'],
+[/Около (\d+) минут\. Ответы сохраняются, можно вернуться позже\./g,'About $1 minutes. Your answers are saved, you can come back later.'],[/Сервер: визит (\S+), открыт: (\S+), срок: ([^<]*)/g,'Server: visit $1, open: $2, due: $3'],[/Эта анкета откроется (\S+)/g,'This questionnaire will open on $1']];
+const trn=x=>{if(!EN)return x;let r=String(x);for(const [a,b] of DS)r=r.split(a).join(b);for(const [a,b] of RX)r=r.replace(a,b);return r};
+const F4E=['Not at all','Several days','More than half the days','Nearly every day'],PFE=['Not during the past month','Less than once a week','Once or twice a week','Three or more times a week'],
+OSE=['Never','Less than 1 night a month','1–3 nights a month','1–3 nights a week','4–7 nights a week'],OWE=['None of the time','A little of the time','Some of the time','Most of the time','All of the time'],
+PE=['No pain','Pain as bad as it could be'],IE=['No interference','Unable to carry on any activities'];
+const BT={demo:['About you','Please do not enter your name or phone number.'],gcps:['Pain','Pain in the face, jaw, temple or in front of the ear.'],jfls:['Jaw function','How limited was each activity over the past month? 0: no limitation, 10: cannot do at all.'],
+gad:['Anxiety','Over the last 2 weeks, how often have you been bothered by the following?'],phq:['Mood','Over the last 2 weeks, how often have you been bothered by the following?'],psqi:['Sleep','Past month only.'],
+obc:['Jaw habits','How often in the past month did you do the following?'],med:['Medications','Everything you take now or took in the past month: antidepressants, painkillers, muscle relaxants, sleeping pills, others.'],life:['Lifestyle','']};
+const EQ={age:'Age (full years)',sex:['Sex','Male','Female'],dur:['How long have you had jaw symptoms?','Less than 3 months','3–6 months','6–12 months','1–3 years','More than 3 years'],
+comor:['Other medical conditions','High blood pressure','Diabetes','Thyroid disease','Arthritis or rheumatic disease','Fibromyalgia or other chronic pain','Migraine or frequent headaches','Bruxism (teeth grinding)','Head or jaw injury','Diagnosed anxiety or depression','None of the above'],
+hist:'Anything else your doctor should know: past jaw treatment, orthodontics, surgery',gp:['Have you had pain in the face, jaw, temple or in front of the ear in the past 30 days?','Yes','No'],
+g1:['How would you rate your pain RIGHT NOW?',...PE],g2:['What was your WORST pain in the past 30 days?',...PE],g3:['What was your AVERAGE pain in the past 30 days?',...PE],
+g4:['How much did pain interfere with your daily activities in the past 30 days?',...IE],g5:['How much did pain interfere with recreational, social and family activities?',...IE],g6:['How much did pain interfere with your ability to work, including housework or study?','No interference','Unable to work'],
+g7:'On how many of the past 30 days did pain keep you from your usual activities?',
+dfn:['How difficult have these problems made it for you to do your work, take care of things at home, or get along with other people?','Not difficult at all','Somewhat difficult','Very difficult','Extremely difficult'],
+p1:'What time did you usually go to bed?',p2:'How many minutes did it usually take you to fall asleep?',p3:'What time did you usually get up in the morning?',p4:'How many hours per night did you actually sleep? (may differ from time in bed)',
+p6:['How would you rate the quality of your sleep?','Very good','Fairly good','Fairly bad','Very bad'],p7:['How often did you take medicine (prescribed or over the counter) to help you sleep?',...PFE],
+p8:['How often did you have trouble staying awake while driving, eating or in social situations?',...PFE],p9:['How much of a problem was it to keep up enough enthusiasm to get things done?','No problem','A slight problem','Somewhat of a problem','A big problem'],
+act:['Physical activity per week','Almost none','1–2 times','3–4 times','5 or more times'],caf:'Cups of coffee, tea or energy drinks per day (total)',smk:['Smoking','I do not smoke','I quit','Cigarettes','Vaping / e-cigarettes'],
+smn:'How many per day (cigarettes or vape puffs)',alc:['Alcohol','I do not drink','Less than once a week','1–3 times a week','Almost every day'],scr:'Hours per day on a computer or phone',str:['Stress level over the past month','No stress','Very severe stress']};
+['Jaw: chewing hard food','Chewing chicken','Eating soft food (mashed potatoes, yogurt)','Opening wide enough to drink from a cup','Swallowing','Yawning','Talking','Smiling'].forEach((x,i)=>EQ['j'+(i+1)]=[x.replace('Jaw: c','C'),'No limitation','Cannot do at all']);
+['Feeling nervous, anxious or on edge','Not being able to stop or control worrying','Worrying too much about different things','Trouble relaxing','Being so restless that it is hard to sit still','Becoming easily annoyed or irritable','Feeling afraid, as if something awful might happen'].forEach((x,i)=>EQ['a'+(i+1)]=[x,...F4E]);
+['Little interest or pleasure in doing things','Feeling down, depressed or hopeless','Trouble falling or staying asleep, or sleeping too much','Feeling tired or having little energy','Poor appetite or overeating','Feeling bad about yourself, or that you are a failure or have let yourself or your family down','Trouble concentrating, for example reading or watching television','Moving or speaking so slowly that others could notice, or the opposite: being so fidgety or restless that you move around much more than usual','Thoughts that you would be better off dead, or of hurting yourself in some way'].forEach((x,i)=>EQ['d'+(i+1)]=[x,...F4E]);
+['could not get to sleep within 30 minutes','woke up in the middle of the night or early morning','had to get up to use the bathroom','could not breathe comfortably','coughed or snored loudly','felt too cold','felt too hot','had bad dreams','had pain','had other reasons'].forEach((x,i)=>EQ['p5'+'abcdefghij'[i]]=['How often was your sleep disturbed because you '+x+'?',...PFE]);
+['Clench or grind your teeth while asleep (based on any information you have)','Sleep in a position that puts pressure on the jaw (on your stomach or side)','Grind your teeth during the day','Clench your teeth during the day','Press, touch or hold your teeth together other than while eating','Hold, tighten or tense your muscles without clenching your teeth','Hold or jut your jaw forward or to the side','Press your tongue forcibly against your teeth','Place your tongue between your teeth','Bite, chew or play with your tongue, cheeks or lips','Hold your jaw rigid or tense, as if bracing or protecting it','Hold or bite objects between your teeth (hair, pencil, pen, fingers, fingernails)','Chew gum','Play a musical instrument that involves the mouth or jaw','Lean with your hand on your jaw, such as resting your chin in your hand','Chew food on one side only','Eat between meals (food that requires chewing)','Talk for a long time (teaching, sales, customer service)','Sing','Yawn','Hold the telephone between your head and shoulder'].forEach((x,i)=>EQ['o'+(i+1)]=[x,...(i<2?OSE:OWE)]);
+const tb=b=>EN&&BT[b.id]?{...b,t:BT[b.id][0],s:BT[b.id][1]}:b;
+const tq=q=>{if(!EN)return q;const e=EQ[q.k];if(e===undefined)return q;if(typeof e==='string')return{...q,t:e};const[tt,...r]=e;if(q.y==='sc')return{...q,t:tt,lo:r[0],hi:r[1]};return{...q,t:tt,o:q.o.map((o,i)=>[o[0],r[i]!==undefined?r[i]:o[1]])}};
+function applyLang(){document.documentElement.lang=EN?'en':'ru';document.title=t('Анкета пациента','Patient questionnaire');const h=document.querySelector('header b');if(h)h.textContent=t('Клинический Компас','Clinical Compass');const g=$('#lg');if(g)g.textContent=EN?'Русский':'English'}
+function pick(l){LANG=l;EN=l==='en';try{localStorage.setItem('cc_lang',l)}catch(e){}applyLang();boot()}
+function langScreen(){$('#bar i').style.width='0';show('<h1>SmartAIR TMD</h1><p class="sub">Выберите язык · Choose your language</p><button class="pri" id="lgru" style="width:100%;margin-bottom:10px">Русский</button><button class="pri" id="lgen" style="width:100%">English</button>');$('#lgru').onclick=()=>pick('ru');$('#lgen').onclick=()=>pick('en')}
+$('#lg').onclick=()=>{try{localStorage.setItem('cc_lang',EN?'ru':'en')}catch(e){}location.reload()};
 const sc=(k,t,lo,hi)=>({k,t,y:'sc',lo,hi}), ch=(k,t,o,x)=>({k,t,y:'ch',o,...x}), nm=(k,t,x)=>({k,t,y:'n',...x}), tx=(k,t,x)=>({k,t,y:'t',...x}), tm=(k,t)=>({k,t,y:'tm'}), mu=(k,t,o,x)=>({k,t,y:'mu',o,...x});
 const F4=[[0,'Совсем нет'],[1,'Несколько дней'],[2,'Более половины дней'],[3,'Почти каждый день']];
 const PF=[[0,'Ни разу за месяц'],[1,'Реже 1 раза в неделю'],[2,'1–2 раза в неделю'],[3,'3 и более раз в неделю']];
@@ -89,60 +148,64 @@ function score(A){const S={};
  const ds=['b','c','d','e','f','g','h','i','j'].reduce((a,x)=>a+num(A['p5'+x]),0);c.push(ds===0?0:ds<=9?1:ds<=18?2:3);c.push(num(A.p7));const dd=num(A.p8)+num(A.p9);c.push(dd===0?0:dd<=2?1:dd<=4?2:3);
  c.forEach((v,i)=>S['psqi_c'+(i+1)]=v);S.psqi=c.reduce((a,b)=>a+b,0);S.psqi_eff=+ef.toFixed(0);
  S.med_count=A.mednone?0:(A.meds||[]).filter(m=>m.n&&m.n.trim()).length;S.alert=(S.phq9_item9>0||S.phq9>=20)?1:0;return S;}
-const st={A:{},bi:0,id:null,visit:1,blocks:[],consent:null};
+const st={A:{},bi:0,id:null,visit:1,blocks:[]};
 const K=()=>'cc_draft_'+st.id+'_'+st.visit;
 const save=()=>{try{localStorage.setItem(K(),JSON.stringify({A:st.A,bi:st.bi}))}catch(e){}};
 async function api(body,tries=3){let err;for(let i=0;i<tries;i++){const c=new AbortController(),t=setTimeout(()=>c.abort(),30000);
  try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body),signal:c.signal});const j=await r.json();if(j.status==='error'){j.fatal=1;throw j}return j}
  catch(e){err=e;if(e.fatal)break;if(i<tries-1)await new Promise(r=>setTimeout(r,1500*2**i+Math.random()*1000))}finally{clearTimeout(t)}}throw err}
 const OTHER='<p><button class="link" id="ot">Это не ваш код? Начать с другим кодом</button></p>';
-const show=h=>{app.innerHTML=h;nav.className='hide';scrollTo(0,0);const o=$('#ot');if(o)o.onclick=()=>{localStorage.removeItem('cc_id');home()}};
-const setCode=()=>{const c=$('#code');if(st.id){c.textContent='Код '+st.id;c.className=''}else c.className='hide'};
-const msg=e=>e&&e.message?e.message:'Нет связи. Проверьте интернет и повторите.';
+const show=h=>{app.innerHTML=trn(h);nav.className='hide';scrollTo(0,0);const o=$('#ot');if(o)o.onclick=()=>{localStorage.removeItem('cc_id');home()}};
+const setCode=()=>{const c=$('#code');if(st.id){c.textContent=t('Код ','Code ')+st.id;c.className=''}else c.className='hide'};
+const msg=e=>e&&e.message?trn(e.message):t('Нет связи. Проверьте интернет и повторите.','No connection. Check your internet and try again.');
 function consent(onAccept){
  show(`<h1>Об исследовании SmartAIR TMD</h1>
  <p>Это исследование посвящено боли в области челюсти, функции нижней челюсти, качеству сна и самочувствию.</p>
- <p>Цель — изучить, как эти показатели связаны между собой и как меняются со временем. Анкету предлагают заполнить сейчас, а затем повторить через 2 и 4 недели.</p>
- <p><b>Заполнение занимает около 3 минут.</b> Участие добровольное. Вы можете отказаться или прекратить заполнение в любой момент.</p>
+ <p>Цель — изучить, как эти показатели связаны между собой и как меняются со временем. Анкету предлагают заполнить сейчас, а затем повторить через 2 и 6 недель.</p>
+ <p><b>Заполнение занимает около 20 минут.</b> Участие добровольное. Вы можете отказаться или прекратить заполнение в любой момент.</p>
  <p>Анкета не заменяет консультацию врача и не предназначена для постановки диагноза. Не указывайте в свободных ответах имя, адрес и другие сведения, по которым вас можно узнать.</p>
  <div class="q"><label class="cb"><input type="checkbox" id="consent"> Я прочитал(а) информацию, понял(а) её и добровольно согласен(на) участвовать в исследовании SmartAIR TMD.</label></div>
- <p class="err" id="e"></p><button class="pri" id="accept" style="width:100%" disabled>Согласен(на) и продолжить</button>
+ <p class="err" id="e"></p>
+ <button class="pri" id="accept" style="width:100%" disabled>Согласен(на) и продолжить</button>
  <button class="link" id="decline">Не согласен(на)</button>`);
  const cb=$('#consent'),btn=$('#accept'),decline=$('#decline');
- if(!cb||!btn||!decline){dbg('Не удалось открыть форму согласия. Обновите страницу.');return}
+ if(!cb||!btn||!decline){dbg(t('Не удалось открыть форму согласия. Обновите страницу.','Could not open the consent form. Please refresh the page.'));return}
  cb.onchange=()=>{btn.disabled=!cb.checked};
- btn.onclick=()=>{if(!cb.checked)return;btn.disabled=true;st.consent={consent:true,consent_timestamp:new Date().toISOString(),consent_version:'2026-11-20-v1'};onAccept()};
+ btn.onclick=()=>{if(!cb.checked)return;btn.disabled=true;st.consent={consent:true,consent_timestamp:new Date().toISOString(),consent_version:'2026-11-21-v2'};onAccept()};
  decline.onclick=home;
 }
-function home(){st.id=null;setCode();$('#bar i').style.width='0';show(`<h1>SmartAIR TMD</h1><p class="sub">Научное исследование боли в области челюсти, качества сна и самочувствия. Анкета занимает около 3 минут; повторные заполнения — через 2 и 4 недели.</p>
+function home(){st.id=null;setCode();$('#bar i').style.width='0';show(`<h1>SmartAIR TMD</h1><p class="sub">Научное исследование боли в области челюсти, качества сна и самочувствия. Анкета занимает около 20 минут; повторные заполнения — через 2 и 6 недель.</p>
 <button class="pri" id="go" style="width:100%">Начать первую анкету</button><p class="err" id="e"></p><button class="link" id="have">У меня уже есть код</button>`);
  $('#go').onclick=()=>consent(async()=>{
-  const e=$('#e');try{
-   const r=await api({action:'register'});const newId=r.id;
-   if(r.status!=='success'||!newId)throw new Error('Сервер не вернул код участника. Ответ: '+JSON.stringify(r));
-   st.id=String(newId).toUpperCase();localStorage.setItem('cc_id',st.id);start({visit:1,open:true});
-  }catch(err){if(e)e.textContent=msg(err)}
+  const consentButton=$('#accept');if(consentButton)consentButton.disabled=true;const errorBox=$('#e');if(errorBox)errorBox.textContent='';
+  try{
+    const r=await api({action:'register'});
+    const newId=r.id;
+    if(r.status!=='success'||!newId)throw new Error('Сервер не вернул код участника. Ответ: '+JSON.stringify(r));
+    st.id=String(newId).toUpperCase();
+    localStorage.setItem('cc_id',st.id);
+    start({visit:1,open:true});
+  }catch(e){$('#e').textContent=msg(e);home()}
  });
  $('#have').onclick=()=>enter();
 }
 function enter(m){show(`<h1>Ваш код</h1><p class="sub">Он выдавался при первой анкете.</p><input type="text" id="ci" maxlength="12" autocapitalize="characters" placeholder="Например K7M4QP" style="text-transform:uppercase">
 <p class="err" id="e">${m||''}</p><button class="pri" id="ok" style="width:100%">Продолжить</button><button class="link" id="bk">Назад</button>`);
- $('#bk').onclick=home;$('#ok').onclick=()=>{const v=$('#ci').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');if(v.length<4)return;st.id=v;consent(()=>start())}
-}
+ $('#bk').onclick=home;$('#ok').onclick=()=>{const v=$('#ci').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');if(v.length<4)return;st.id=v;consent(()=>start())}}
 async function start(pre){setCode();show('<p class="sub">Загрузка…</p>');let r=pre;
  if(!r)try{r=await api({action:'status',id:st.id})}catch(e){if(e.fatal){localStorage.removeItem('cc_id');return enter('Код не найден. Проверьте и повторите.')}
   return show(`<p class="err">${msg(e)}</p><button class="pri" id="r" style="width:100%">Повторить</button>`),$('#r').onclick=()=>start()}
  localStorage.setItem('cc_id',st.id);
  if(r.finished)return show(`<h1>Все три анкеты заполнены</h1><p class="sub">Спасибо! Больше ничего делать не нужно.</p>${OTHER}`);
- if(!r.open)return show(`<h1>Следующая анкета</h1><p class="sub">Анкета ${r.visit} из 3 откроется ${r.due}. Сохраните код и эту ссылку.</p><p class="sub" style="font-size:11px">Сервер: визит ${r.visit}, открыт: ${r.open}, срок: ${r.due}</p><div class="big">${st.id}</div>${linkBtn()}${OTHER}`),bindLink();
+ if(!r.open)return show(`<h1>Следующая анкета</h1><p class="sub">Анкета ${r.visit} из 3 откроется ${r.due}. Сохраните код и эту ссылку.</p><div class="big">${st.id}</div>${linkBtn()}${OTHER}`),bindLink();
  st.visit=r.visit;st.blocks=BLOCKS.filter(b=>!b.v1||st.visit===1);st.A={...(st.consent||{})};st.bi=0;
  try{const d=JSON.parse(localStorage.getItem(K())||'null');if(d){st.A={...(d.A||{}),...(st.consent||{})};st.bi=Math.min(d.bi||0,st.blocks.length-1)}}catch(e){}
- if(st.bi>0||Object.keys(st.A).length)return show(`<h1>Анкета ${st.visit} из 3</h1><p class="sub">У вас есть начатая анкета.</p><button class="pri" id="c" style="width:100%">Продолжить</button><button class="link" id="n">Начать заново</button>${OTHER}`),
+ if(st.bi>0||Object.keys(st.A).filter(k=>!['consent','consent_timestamp','consent_version','lang'].includes(k)).length)return show(`<h1>Анкета ${st.visit} из 3</h1><p class="sub">У вас есть начатая анкета.</p><button class="pri" id="c" style="width:100%">Продолжить</button><button class="link" id="n">Начать заново</button>${OTHER}`),
   $('#c').onclick=block,$('#n').onclick=()=>{st.A={};st.bi=0;save();block()};
- show(`<h1>Анкета ${st.visit} из 3</h1><p class="sub">Около 3 минут. Ответы сохраняются, можно вернуться позже.</p><button class="pri" id="c" style="width:100%">Начать</button>${OTHER}`);$('#c').onclick=block}
+ show(`<h1>Анкета ${st.visit} из 3</h1><p class="sub">Около ${st.visit===1?20:15} минут. Ответы сохраняются, можно вернуться позже.</p><button class="pri" id="c" style="width:100%">Начать</button>${OTHER}`);$('#c').onclick=block}
 const linkBtn=()=>'<button class="pri" id="cl" style="width:100%">Скопировать ссылку для следующего раза</button><p class="sub" id="cm"></p>';
 const myLink=()=>location.origin+location.pathname+'?id='+st.id;
-function bindLink(){const b=$('#cl');if(b)b.onclick=async()=>{try{await navigator.clipboard.writeText(myLink());$('#cm').textContent='Ссылка скопирована.'}catch(e){$('#cm').textContent=myLink()}}}
+function bindLink(){const b=$('#cl');if(b)b.onclick=async()=>{try{await navigator.clipboard.writeText(myLink());$('#cm').textContent=t('Ссылка скопирована.','Link copied.')}catch(e){$('#cm').textContent=myLink()}}}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function qHTML(q){const v=st.A[q.k];if(q.y==='med')return medHTML();let h=`<div class="q" data-k="${q.k}"><p>${esc(q.t)}</p>`;
  if(q.y==='sc')h+='<div class="sc">'+[...Array(11).keys()].map(i=>`<button type="button" data-v="${i}" class="${v===i?'on':''}">${i}</button>`).join('')+`</div><div class="ends"><span>${q.lo}</span><span>${q.hi}</span></div>`;
@@ -151,12 +214,13 @@ function qHTML(q){const v=st.A[q.k];if(q.y==='med')return medHTML();let h=`<div 
  else if(q.y==='t')h+=`<textarea data-i="1" maxlength="1500">${esc(v||'')}</textarea>`;
  else h+=`<input data-i="1" type="${q.y==='tm'?'time':'number'}" inputmode="${q.y==='n'?'decimal':'text'}" ${q.min!=null?`min="${q.min}" max="${q.max}"`:''} step="${q.step||1}" value="${esc(v==null?'':v)}">`;
  return h+'</div>'}
-function medHTML(){const M=st.A.meds&&st.A.meds.length?st.A.meds:[{}];st.A.meds=M;
+function medHTML(){return trn(medHTML0())}
+function medHTML0(){const M=st.A.meds&&st.A.meds.length?st.A.meds:[{}];st.A.meds=M;
  return `<div class="q" data-k="meds"><label class="cb"><input type="checkbox" id="mn" ${st.A.mednone?'checked':''}>Лекарства не принимаю</label><div id="ml" class="${st.A.mednone?'hide':''}">`+M.map((m,i)=>`<div class="med" data-r="${i}"><input type="text" data-f="n" placeholder="Название препарата" value="${esc(m.n||'')}"><input type="text" data-f="d" placeholder="Дозировка (например 50 мг, 1 раз в день)" value="${esc(m.d||'')}"><input type="text" data-f="l" placeholder="Сколько времени принимаете" value="${esc(m.l||'')}"><input type="text" data-f="i" placeholder="Для чего (показание)" value="${esc(m.i||'')}"><select data-f="c"><option value="">Изменения терапии…</option>${[['no','Без изменений'],['new','Начат недавно'],['dose','Изменена доза'],['stop','Отменён']].map(([x,l])=>`<option value="${x}" ${m.c===x?'selected':''}>${l}</option>`).join('')}</select></div>`).join('')+`<button type="button" class="link" id="ma">+ Добавить препарат</button></div></div>`}
 function applyIf(){document.querySelectorAll('.q[data-k]').forEach(e=>{const q=st.cur.find(x=>x.k===e.dataset.k);if(q&&q.if)e.classList.toggle('hide',!q.if(st.A))})}
-function block(){const b=st.blocks[st.bi];st.cur=b.q;setCode();$('#bar i').style.width=(st.bi/st.blocks.length*100)+'%';
- show(`<h2>${b.t}</h2><p class="sub">${b.s||''}</p>`+b.q.map(qHTML).join('')+'<p class="err" id="e"></p>');applyIf();
- nav.className='';nav.innerHTML=(st.bi>0?'<button id="pv">Назад</button>':'')+`<button class="pri" id="nx">${st.bi===st.blocks.length-1?'Отправить':'Далее'}</button>`;
+function block(){const b0=st.blocks[st.bi],b=tb(b0);st.cur=b0.q;setCode();$('#bar i').style.width=(st.bi/st.blocks.length*100)+'%';
+ show(`<h2>${b.t}</h2><p class="sub">${b.s||''}</p>`+b0.q.map(q=>qHTML(tq(q))).join('')+'<p class="err" id="e"></p>');applyIf();
+ nav.className='';nav.innerHTML=(st.bi>0?'<button id="pv">'+t('Назад','Back')+'</button>':'')+`<button class="pri" id="nx">${st.bi===st.blocks.length-1?t('Отправить','Submit'):t('Далее','Next')}</button>`;
  $('#nx').onclick=next;if($('#pv'))$('#pv').onclick=()=>{st.bi--;save();block()}}
 app.addEventListener('click',e=>{const b=e.target.closest('button[data-v]');if(b){const k=b.closest('.q').dataset.k;const raw=b.dataset.v;st.A[k]=/^\d+$/.test(raw)?+raw:raw;b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));b.closest('.q').classList.remove('bad');applyIf();save()}
  if(e.target.id==='ma'){st.A.meds.push({});const k=app.querySelector('[data-k=meds]');k.outerHTML=medHTML();save()}});
@@ -169,76 +233,42 @@ function missing(){const out=[];st.cur.forEach(q=>{if(q.opt||(q.if&&!q.if(st.A))
  if(q.y==='med')ok=st.A.mednone||(st.A.meds||[]).some(m=>m.n&&m.n.trim());else if(q.y==='mu')ok=v&&v.length;else if(q.y==='tm'||q.y==='t')ok=v;else ok=v!==undefined&&v!==''&&!Number.isNaN(v);
  if(ok&&q.min!=null&&(v<q.min||v>q.max))ok=false;if(!ok)out.push(q.k)});return out}
 async function next(){const m=missing();document.querySelectorAll('.q.bad').forEach(e=>e.classList.remove('bad'));
- if(m.length){m.forEach(k=>{const e=app.querySelector(`[data-k=${k}]`);e&&e.classList.add('bad')});$('#e').textContent='Ответьте, пожалуйста, на все выделенные вопросы.';const f=app.querySelector('.q.bad');f&&f.scrollIntoView({block:'center',behavior:'smooth'});return}
+ if(m.length){m.forEach(k=>{const e=app.querySelector(`[data-k=${k}]`);e&&e.classList.add('bad')});$('#e').textContent=t('Ответьте, пожалуйста, на все выделенные вопросы.','Please answer all highlighted questions.');const f=app.querySelector('.q.bad');f&&f.scrollIntoView({block:'center',behavior:'smooth'});return}
  if(st.bi<st.blocks.length-1){st.bi++;save();return block()}
  await submit()}
-async function submit(){nav.className='hide';show('<p class="sub">Отправляем ответы…</p>');const A=JSON.parse(JSON.stringify(st.A)),S=score(A);
+async function submit(){nav.className='hide';show('<p class="sub">Отправляем ответы…</p>');const A=JSON.parse(JSON.stringify(st.A));A.lang=LANG||'ru';const S=score(A);
  let uid=localStorage.getItem('cc_uuid_'+K());if(!uid){uid=crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random();localStorage.setItem('cc_uuid_'+K(),uid)}
  const submittedAt=new Date();
  const payload={action:'submit',record_uuid:uid,participant_id:st.id,visit:st.visit,datetime:submittedAt.toISOString(),scores:S,answers:A};
  try{const r=await api(payload,4);try{localStorage.removeItem(K())}catch(e){}done(S,r,submittedAt)}
  catch(e){show(`<h1>Не удалось отправить</h1><p class="sub">${esc(msg(e))} Ответы сохранены на этом устройстве.</p><button class="pri" id="r" style="width:100%">Повторить отправку</button>`);$('#r').onclick=submit}}
-function dateText(d){return new Intl.DateTimeFormat('ru-RU',{day:'2-digit',month:'long',year:'numeric'}).format(d)}
-function makeSummary(A,S,submittedAt){
- const due=new Date(submittedAt);due.setDate(due.getDate()+14);
- const fmt=v=>v===undefined||v===null||v===''?'не указано':String(v);
- const lines=[];
- lines.push('Результаты заполнения SmartAIR TMD');
- lines.push('Код участника: '+st.id);
- lines.push('Дата заполнения (T'+(st.visit-1)+'): '+dateText(submittedAt));
- lines.push('');
- lines.push('Показатели по вашим ответам:');
- lines.push('Боль сейчас: '+(A.gp==='Y'?fmt(A.g1)+'/10':'не отмечалась за последние 30 дней')+'.');
- if(A.gp==='Y'){
-  lines.push('Наибольшая боль за последние 30 дней: '+fmt(A.g2)+'/10.');
-  lines.push('Средняя боль за последние 30 дней: '+fmt(A.g3)+'/10.');
-  lines.push('Влияние боли на повседневные дела: '+fmt(A.g4)+'/10.');
-  lines.push('Влияние боли на отдых и общение: '+fmt(A.g5)+'/10.');
-  lines.push('Влияние боли на работу или учёбу: '+fmt(A.g6)+'/10.');
-  lines.push('Дней с ограничением обычных занятий: '+fmt(A.g7)+' из 30.');
- }
- lines.push('Функция челюсти — JFLS-8 (среднее значение): '+S.jfls8+'/10.');
- lines.push('Ответы на вопросы GAD-7: '+S.gad7+'/21.');
- lines.push('Ответы на вопросы PHQ-9: '+S.phq9+'/27.');
- lines.push('Ответы на вопросы PSQI: '+S.psqi+'/21.');
- lines.push('Ответы о привычках челюсти — OBC: '+S.obc+'/84.');
- lines.push('');
- if(st.visit<3)lines.push('Ориентировочная дата следующего заполнения (через 14 дней): '+dateText(due)+'.');
- else lines.push('Все запланированные этапы заполнения завершены.');
- lines.push('');
- lines.push('Карточка содержит числовые показатели и ответы из анкеты. Она не является диагнозом, медицинским заключением или рекомендацией по лечению.');
- return {text:lines.join('\n'),due:st.visit<3?dateText(due):null};
-}
-function done(S,r,submittedAt){
- $('#bar i').style.width='100%';
- const last=st.visit>=3;
- const summary=makeSummary(st.A,S,submittedAt);
- const resultLines=summary.text.split('\n').slice(4);
- show(`<h1>Анкета ${st.visit} из 3 отправлена</h1>`+
- (S.alert?`<div class="warn"><b>Если у вас есть мысли о причинении себе вреда</b>, пожалуйста, сегодня же обратитесь за помощью: позвоните по номеру 112 или сообщите врачу.</div>`:'')+
- `<section class="summary" id="patientSummary">
- <h2>Ваши результаты SmartAIR TMD</h2>
- <p class="summary-note">Информационная карточка по вашим ответам</p>
- <p><b>Код участника:</b> ${esc(st.id)}</p>
- <p><b>Дата заполнения (T${st.visit-1}):</b> ${dateText(submittedAt)}</p>
- <div class="summary-results"><b>Показатели по заполненным шкалам и вопросам</b>
- <ul>${resultLines.filter(x=>x&&!x.startsWith('Показатели по')&&!x.startsWith('Ориентировочная дата')&&!x.startsWith('Все запланированные')&&!x.startsWith('Карточка содержит')).map(x=>'<li>'+esc(x)+'</li>').join('')}</ul></div>
- ${last?'<p><b>Все запланированные этапы заполнения завершены.</b></p>':`<p><b>Следующее заполнение (ориентировочно):</b> ${summary.due}</p>`}
- <p class="summary-note">Здесь приведены только ваши ответы и рассчитанные по ним баллы. Карточка не устанавливает диагноз и не содержит рекомендаций по лечению.</p>
- <div class="summary-actions"><button class="pri" id="copySummary">Скопировать результаты</button><button id="printSummary">Сохранить / распечатать</button></div>
- </section>`+
- (last?'<p class="sub">Спасибо за участие!</p>':`<p class="sub">Сохраните код участника — он понадобится для следующего заполнения.</p><div class="big">${esc(st.id)}</div>${linkBtn()}`));
- const cp=$('#copySummary');
- if(cp)cp.onclick=async()=>{
-  try{await navigator.clipboard.writeText(summary.text);cp.textContent='Скопировано'}
-  catch(e){
-   const ta=document.createElement('textarea');ta.value=summary.text;document.body.appendChild(ta);ta.select();
-   try{document.execCommand('copy');cp.textContent='Скопировано'}catch(x){cp.textContent='Не удалось скопировать'}
-   ta.remove();
-  }
- };
- const pr=$('#printSummary');if(pr)pr.onclick=()=>window.print();
- bindLink();
-}
-(async()=>{if(qp.get('new')){localStorage.removeItem('cc_id');return home()}const id=(qp.get('id')||localStorage.getItem('cc_id')||'').toUpperCase().replace(/[^A-Z0-9]/g,'');if(id.length>=4){st.id=id;start()}else home()})();
+function dateText(d){return new Intl.DateTimeFormat(EN?'en-GB':'ru-RU',{day:'2-digit',month:'long',year:'numeric'}).format(d)}
+function makeSummary(A,S,at){
+ const due=new Date(at);due.setDate(due.getDate()+14);const na=t('не указано','not specified'),f=v=>v===undefined||v===null||v===''?na:String(v),it=[];
+ it.push(t('Боль сейчас: ','Pain right now: ')+(A.gp==='Y'?f(A.g1)+'/10':t('не отмечалась за последние 30 дней','no pain in the past 30 days'))+'.');
+ if(A.gp==='Y'){it.push(t('Наибольшая боль за последние 30 дней: ','Worst pain in the past 30 days: ')+f(A.g2)+'/10.');it.push(t('Средняя боль за последние 30 дней: ','Average pain in the past 30 days: ')+f(A.g3)+'/10.');
+  it.push(t('Влияние боли на повседневные дела: ','Interference with daily activities: ')+f(A.g4)+'/10.');it.push(t('Влияние боли на отдых и общение: ','Interference with recreation and social life: ')+f(A.g5)+'/10.');
+  it.push(t('Влияние боли на работу или учёбу: ','Interference with work or study: ')+f(A.g6)+'/10.');it.push(t('Дней с ограничением обычных занятий: ','Days with limited activities: ')+f(A.g7)+t(' из 30.',' of 30.'))}
+ it.push(t('Функция челюсти — JFLS-8 (среднее значение): ','Jaw function, JFLS-8 (mean score): ')+S.jfls8+'/10.');it.push(t('Ответы на вопросы GAD-7: ','GAD-7 score: ')+S.gad7+'/21.');
+ it.push(t('Ответы на вопросы PHQ-9: ','PHQ-9 score: ')+S.phq9+'/27.');it.push(t('Ответы на вопросы PSQI: ','PSQI score: ')+S.psqi+'/21.');it.push(t('Ответы о привычках челюсти — OBC: ','Jaw habits, OBC: ')+S.obc+'/84.');
+ const head=[t('Результаты заполнения SmartAIR TMD','SmartAIR TMD questionnaire results'),t('Код участника: ','Participant code: ')+st.id,t('Дата заполнения (T','Date completed (T')+(st.visit-1)+'): '+dateText(at),'',t('Показатели по вашим ответам:','Scores based on your answers:')];
+ const tail=['',st.visit<3?t('Ориентировочная дата следующего заполнения (через 14 дней): ','Approximate date of the next questionnaire (in 14 days): ')+dateText(due)+'.':t('Все запланированные этапы заполнения завершены.','All scheduled questionnaires are complete.'),'',
+  t('Карточка содержит числовые показатели и ответы из анкеты. Она не является диагнозом, медицинским заключением или рекомендацией по лечению.','This card contains numerical scores and answers from the questionnaire. It is not a diagnosis, medical report or treatment recommendation.')];
+ return{text:[...head,...it,...tail].join('\n'),items:it,due:st.visit<3?dateText(due):null}}
+function done(S,r,at){
+ $('#bar i').style.width='100%';const last=st.visit>=3,sm=makeSummary(st.A,S,at);
+ show(`<h1>${t('Анкета '+st.visit+' из 3 отправлена','Questionnaire '+st.visit+' of 3 submitted')}</h1>`+
+ (S.alert?`<div class="warn"><b>${t('Если у вас есть мысли о причинении себе вреда','If you have thoughts of harming yourself')}</b>${t(', пожалуйста, сегодня же обратитесь за помощью: позвоните по номеру 112 или сообщите врачу.',', please seek help today: call your local emergency number (112 in Russia and the EU) or tell your doctor.')}</div>`:'')+
+ `<section class="summary" id="patientSummary"><h2>${t('Ваши результаты SmartAIR TMD','Your SmartAIR TMD results')}</h2><p class="summary-note">${t('Информационная карточка по вашим ответам','Information card based on your answers')}</p>
+ <p><b>${t('Код участника:','Participant code:')}</b> ${esc(st.id)}</p><p><b>${t('Дата заполнения (T','Date completed (T')}${st.visit-1}):</b> ${dateText(at)}</p>
+ <div class="summary-results"><b>${t('Показатели по заполненным шкалам и вопросам','Scores for the completed scales and questions')}</b><ul>${sm.items.map(x=>'<li>'+esc(x)+'</li>').join('')}</ul></div>
+ ${last?`<p><b>${t('Все запланированные этапы заполнения завершены.','All scheduled questionnaires are complete.')}</b></p>`:`<p><b>${t('Следующее заполнение (ориентировочно):','Next questionnaire (approximate date):')}</b> ${sm.due}</p>`}
+ <p class="summary-note">${t('Здесь приведены только ваши ответы и рассчитанные по ним баллы. Карточка не устанавливает диагноз и не содержит рекомендаций по лечению.','This card shows only your answers and the scores calculated from them. It does not establish a diagnosis and contains no treatment recommendations.')}</p>
+ <div class="summary-actions"><button class="pri" id="copySummary">${t('Скопировать результаты','Copy results')}</button><button id="printSummary">${t('Сохранить / распечатать','Save / print')}</button></div></section>`+
+ (last?`<p class="sub">${t('Спасибо за участие!','Thank you for taking part!')}</p>`:`<p class="sub">${t('Сохраните код участника — он понадобится для следующего заполнения.','Save your participant code: you will need it for the next questionnaire.')}</p><div class="big">${esc(st.id)}</div>${linkBtn()}`));
+ const cp=$('#copySummary'),ok=t('Скопировано','Copied');
+ if(cp)cp.onclick=async()=>{try{await navigator.clipboard.writeText(sm.text);cp.textContent=ok}catch(e){const ta=document.createElement('textarea');ta.value=sm.text;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');cp.textContent=ok}catch(x){cp.textContent=t('Не удалось скопировать','Could not copy')}ta.remove()}};
+ const pr=$('#printSummary');if(pr)pr.onclick=()=>window.print();bindLink()}
+function boot(){if(!LANG)return langScreen();applyLang();if(qp.get('new')){localStorage.removeItem('cc_id');return home()}const id=(qp.get('id')||localStorage.getItem('cc_id')||'').toUpperCase().replace(/[^A-Z0-9]/g,'');if(id.length>=4){st.id=id;start()}else home()}
+boot();
 </script></body></html>
