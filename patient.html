@@ -89,7 +89,7 @@ function score(A){const S={};
  const ds=['b','c','d','e','f','g','h','i','j'].reduce((a,x)=>a+num(A['p5'+x]),0);c.push(ds===0?0:ds<=9?1:ds<=18?2:3);c.push(num(A.p7));const dd=num(A.p8)+num(A.p9);c.push(dd===0?0:dd<=2?1:dd<=4?2:3);
  c.forEach((v,i)=>S['psqi_c'+(i+1)]=v);S.psqi=c.reduce((a,b)=>a+b,0);S.psqi_eff=+ef.toFixed(0);
  S.med_count=A.mednone?0:(A.meds||[]).filter(m=>m.n&&m.n.trim()).length;S.alert=(S.phq9_item9>0||S.phq9>=20)?1:0;return S;}
-const st={A:{},bi:0,id:null,visit:1,blocks:[]};
+const st={A:{},bi:0,id:null,visit:1,blocks:[],consent:null};
 const K=()=>'cc_draft_'+st.id+'_'+st.visit;
 const save=()=>{try{localStorage.setItem(K(),JSON.stringify({A:st.A,bi:st.bi}))}catch(e){}};
 async function api(body,tries=3){let err;for(let i=0;i<tries;i++){const c=new AbortController(),t=setTimeout(()=>c.abort(),30000);
@@ -99,50 +99,47 @@ const OTHER='<p><button class="link" id="ot">Это не ваш код? Нача
 const show=h=>{app.innerHTML=h;nav.className='hide';scrollTo(0,0);const o=$('#ot');if(o)o.onclick=()=>{localStorage.removeItem('cc_id');home()}};
 const setCode=()=>{const c=$('#code');if(st.id){c.textContent='Код '+st.id;c.className=''}else c.className='hide'};
 const msg=e=>e&&e.message?e.message:'Нет связи. Проверьте интернет и повторите.';
-function home(){st.id=null;setCode();$('#bar i').style.width='0';show(`<h1>Анкета пациента</h1><p class="sub">Заполнение займёт около 20 минут.</p>
+function consent(onAccept){
+ show(`<h1>Об исследовании SmartAIR TMD</h1>
+ <p>Это исследование посвящено боли в области челюсти, функции нижней челюсти, качеству сна и самочувствию.</p>
+ <p>Цель — изучить, как эти показатели связаны между собой и как меняются со временем. Анкету предлагают заполнить сейчас, а затем повторить через 2 и 4 недели.</p>
+ <p><b>Заполнение занимает около 3 минут.</b> Участие добровольное. Вы можете отказаться или прекратить заполнение в любой момент.</p>
+ <p>Анкета не заменяет консультацию врача и не предназначена для постановки диагноза. Не указывайте в свободных ответах имя, адрес и другие сведения, по которым вас можно узнать.</p>
+ <div class="q"><label class="cb"><input type="checkbox" id="consent"> Я прочитал(а) информацию, понял(а) её и добровольно согласен(на) участвовать в исследовании SmartAIR TMD.</label></div>
+ <p class="err" id="e"></p><button class="pri" id="accept" style="width:100%" disabled>Согласен(на) и продолжить</button>
+ <button class="link" id="decline">Не согласен(на)</button>`);
+ const cb=$('#consent'),btn=$('#accept'),decline=$('#decline');
+ if(!cb||!btn||!decline){dbg('Не удалось открыть форму согласия. Обновите страницу.');return}
+ cb.onchange=()=>{btn.disabled=!cb.checked};
+ btn.onclick=()=>{if(!cb.checked)return;btn.disabled=true;st.consent={consent:true,consent_timestamp:new Date().toISOString(),consent_version:'2026-11-20-v1'};onAccept()};
+ decline.onclick=home;
+}
+function home(){st.id=null;setCode();$('#bar i').style.width='0';show(`<h1>SmartAIR TMD</h1><p class="sub">Научное исследование боли в области челюсти, качества сна и самочувствия. Анкета занимает около 3 минут; повторные заполнения — через 2 и 4 недели.</p>
 <button class="pri" id="go" style="width:100%">Начать первую анкету</button><p class="err" id="e"></p><button class="link" id="have">У меня уже есть код</button>`);
-
-$('#go').onclick=async()=>{
-  $('#go').disabled=true;
-  $('#e').textContent='';
-  try{
-    const r=await api({action:'register'});
-
-    // Проверяем, какое поле с кодом вернул сервер
-    const newId = r.id;
-
-    if (r.status !== 'success' || !newId) {
-      throw new Error(
-        'Сервер не вернул код участника. Ответ: ' +
-        JSON.stringify(r)
-      );
-    }
-
-    st.id = String(newId).toUpperCase();
-    localStorage.setItem('cc_id', st.id);
-    start({visit:1,open:true});
-
-  }catch(e){
-    $('#e').textContent=msg(e);
-    $('#go').disabled=false;
-  }
-};
-
- $('#have').onclick=()=>enter();}
+ $('#go').onclick=()=>consent(async()=>{
+  const e=$('#e');try{
+   const r=await api({action:'register'});const newId=r.id;
+   if(r.status!=='success'||!newId)throw new Error('Сервер не вернул код участника. Ответ: '+JSON.stringify(r));
+   st.id=String(newId).toUpperCase();localStorage.setItem('cc_id',st.id);start({visit:1,open:true});
+  }catch(err){if(e)e.textContent=msg(err)}
+ });
+ $('#have').onclick=()=>enter();
+}
 function enter(m){show(`<h1>Ваш код</h1><p class="sub">Он выдавался при первой анкете.</p><input type="text" id="ci" maxlength="12" autocapitalize="characters" placeholder="Например K7M4QP" style="text-transform:uppercase">
 <p class="err" id="e">${m||''}</p><button class="pri" id="ok" style="width:100%">Продолжить</button><button class="link" id="bk">Назад</button>`);
- $('#bk').onclick=home;$('#ok').onclick=()=>{const v=$('#ci').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');if(v.length<4)return;st.id=v;start()}}
+ $('#bk').onclick=home;$('#ok').onclick=()=>{const v=$('#ci').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');if(v.length<4)return;st.id=v;consent(()=>start())}
+}
 async function start(pre){setCode();show('<p class="sub">Загрузка…</p>');let r=pre;
  if(!r)try{r=await api({action:'status',id:st.id})}catch(e){if(e.fatal){localStorage.removeItem('cc_id');return enter('Код не найден. Проверьте и повторите.')}
   return show(`<p class="err">${msg(e)}</p><button class="pri" id="r" style="width:100%">Повторить</button>`),$('#r').onclick=()=>start()}
  localStorage.setItem('cc_id',st.id);
  if(r.finished)return show(`<h1>Все три анкеты заполнены</h1><p class="sub">Спасибо! Больше ничего делать не нужно.</p>${OTHER}`);
  if(!r.open)return show(`<h1>Следующая анкета</h1><p class="sub">Анкета ${r.visit} из 3 откроется ${r.due}. Сохраните код и эту ссылку.</p><p class="sub" style="font-size:11px">Сервер: визит ${r.visit}, открыт: ${r.open}, срок: ${r.due}</p><div class="big">${st.id}</div>${linkBtn()}${OTHER}`),bindLink();
- st.visit=r.visit;st.blocks=BLOCKS.filter(b=>!b.v1||st.visit===1);st.A={};st.bi=0;
- try{const d=JSON.parse(localStorage.getItem(K())||'null');if(d){st.A=d.A||{};st.bi=Math.min(d.bi||0,st.blocks.length-1)}}catch(e){}
+ st.visit=r.visit;st.blocks=BLOCKS.filter(b=>!b.v1||st.visit===1);st.A={...(st.consent||{})};st.bi=0;
+ try{const d=JSON.parse(localStorage.getItem(K())||'null');if(d){st.A={...(d.A||{}),...(st.consent||{})};st.bi=Math.min(d.bi||0,st.blocks.length-1)}}catch(e){}
  if(st.bi>0||Object.keys(st.A).length)return show(`<h1>Анкета ${st.visit} из 3</h1><p class="sub">У вас есть начатая анкета.</p><button class="pri" id="c" style="width:100%">Продолжить</button><button class="link" id="n">Начать заново</button>${OTHER}`),
   $('#c').onclick=block,$('#n').onclick=()=>{st.A={};st.bi=0;save();block()};
- show(`<h1>Анкета ${st.visit} из 3</h1><p class="sub">Около ${st.visit===1?20:15} минут. Ответы сохраняются, можно вернуться позже.</p><button class="pri" id="c" style="width:100%">Начать</button>${OTHER}`);$('#c').onclick=block}
+ show(`<h1>Анкета ${st.visit} из 3</h1><p class="sub">Около 3 минут. Ответы сохраняются, можно вернуться позже.</p><button class="pri" id="c" style="width:100%">Начать</button>${OTHER}`);$('#c').onclick=block}
 const linkBtn=()=>'<button class="pri" id="cl" style="width:100%">Скопировать ссылку для следующего раза</button><p class="sub" id="cm"></p>';
 const myLink=()=>location.origin+location.pathname+'?id='+st.id;
 function bindLink(){const b=$('#cl');if(b)b.onclick=async()=>{try{await navigator.clipboard.writeText(myLink());$('#cm').textContent='Ссылка скопирована.'}catch(e){$('#cm').textContent=myLink()}}}
